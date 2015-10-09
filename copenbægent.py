@@ -168,13 +168,22 @@ def navigation_play():
         board[int(nav[TOKEN]['graph']['vertices'][i]['row'])][int(nav[TOKEN]['graph']['vertices'][i]['column'])] \
             = int(nav[TOKEN]['graph']['vertices'][i]['weight'])
     loc = nav[TOKEN]['config']['initial']
+    board_pretty(board)
+
+def tree_search():
+    pass
+
+def board_pretty(board):
+    print(type(board))
+    for i in board:
+        print(i)
 
 
 def main():
     map_enter()
-    # go_to_location('langelinie')
-    go_to_location('christianshavn')
-    # navigation_play()
+    go_to_location('langelinie')
+    # go_to_location('christianshavn')
+    navigation_play()
     # map_leave()
 
 main()
