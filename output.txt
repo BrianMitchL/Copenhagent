@@ -1,6 +1,6 @@
 vertices
 edges
-x,y
+y,x
 
 {
 	'19c6201b0aeebe7929d18d77b494be33': {
