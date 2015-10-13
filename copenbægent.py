@@ -161,6 +161,11 @@ def navigation_play():
     nav = navigation_enter()
     board = Navigation(nav, TOKEN)
     board.pretty_print()
+    # while board.iterate() == True:
+    #     board.which_direction(int(board.current_location['row']),int(board.current_location['column']))
+    # print(board.final_list())
+    # print(board.final_count())
+
     print(board.current_location)
     newstring = board.left(7,0)
     board.set_current_location(newstring)
@@ -178,6 +183,7 @@ class Navigation:
     current_location = {}
     initial_return = {}
     token = ''
+    keep_going = True
 
     def __init__(self, nav, token):
         self.initial_return = nav
@@ -187,6 +193,15 @@ class Navigation:
             self.board[nav[token]['graph']['vertices'][i]['row']][nav[token]['graph']['vertices'][i]['column']] \
                 = nav[token]['graph']['vertices'][i]['weight']
         self.current_location = nav[token]['config']['initial']
+
+    def iterate(self):
+        return self.keep_going
+
+    def final_list(self):
+        return self.move_list
+
+    def final_count(self):
+        return self.weight_count
 
     def set_current_location(self, string):
         string = string[1:-1]
@@ -241,6 +256,7 @@ class Navigation:
             chosen_direction = stay
         if stay == '-10000' and left == '-10000' and right == '-10000':
             map_leave()
+            self.keep_going = False
             print("Leaving Navigation!")
         else:
             for i in self.initial_return[self.token]['graph']['vertices']:
