@@ -168,22 +168,69 @@ def navigation_play():
         board[int(nav[TOKEN]['graph']['vertices'][i]['row'])][int(nav[TOKEN]['graph']['vertices'][i]['column'])] \
             = int(nav[TOKEN]['graph']['vertices'][i]['weight'])
     loc = nav[TOKEN]['config']['initial']
-    tree_search(loc)
+    tree_search(nav, loc)
     board_pretty(board)
     f = open('./output.txt', 'w+')
     f.write(str(nav))
 
 
-def tree_search(loc):
+def tree_search(nav, loc):
     instruction_list = []
     current_loc = loc
-    while
+    while current_loc < nav[TOKEN]['config']['size']['columns']:
+        left = nav[TOKEN]['graph']['edges'][]
 
 
 def board_pretty(board):
     print(type(board))
     for i in board:
         print(i)
+
+
+
+
+class navigation():
+
+    board = []
+    current_location = {}
+    initial_return = {}
+    token = ''
+
+    def __init__(self, nav, token):
+        self.initial_return = nav
+        self.token = token
+        self.board = [[0]*nav[token]['config']['size']['columns'] for i in range(nav[token]['config']['size']['rows'])]
+        # new_board = namedtuple('Struct', board.keys())(*board.values())
+        # print(new_board)
+        for i in nav[token]['graph']['vertices']:
+            # print(nav[TOKEN]['graph']['vertices'][i])
+            self.board[int(nav[token]['graph']['vertices'][i]['row'])][int(nav[token]['graph']['vertices'][i]['column'])] \
+                = int(nav[token]['graph']['vertices'][i]['weight'])
+        self.current_location = nav[token]['config']['initial']
+
+
+    def weight(self, row, col):
+        return self.board[row][col]
+
+
+    def left(self, row, col):
+        edge = self.initial_return[self.token]['graph']['edges']['[' + row + ',' + col + ']']
+        left = edge['left']
+
+
+    def right(self, row, col):
+        edge = self.initial_return[self.token]['graph']['edges']['[' + row + ',' + col + ']']
+        right = edge['right']
+
+
+    def stay(self, row, col):
+        edge = self.initial_return[self.token]['graph']['edges']['[' + row + ',' + col + ']']
+        stay = edge['stay']
+
+
+
+
+
 
 
 def main():
