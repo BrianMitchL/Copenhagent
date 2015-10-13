@@ -9,6 +9,7 @@ import requests
 import json
 from urllib.parse import urlencode
 import sys
+import time
 from random import randint
 
 
@@ -80,6 +81,7 @@ def map_leave():
 
 
 def go_to_location(location_id):  # where we are trying to go
+    print(CURRENT_LOC)
     cw_cost = 0
     ccw_cost = 0
     metro = MAP['state']['map']['metro']
@@ -152,8 +154,8 @@ def navigation_leave():
     return res
 
 
-def navigation_lane(dir):
-    res = call_api('http://localhost:3000/api/navigation/lane?direction=' + dir)
+def navigation_lane(direction):
+    res = call_api('http://localhost:3000/api/navigation/lane?direction=' + direction)
     return res
 
 
@@ -161,19 +163,22 @@ def navigation_play():
     nav = navigation_enter()
     board = Navigation(nav, TOKEN)
     board.pretty_print()
-    # while board.iterate() == True:
-    #     board.which_direction(int(board.current_location['row']),int(board.current_location['column']))
-    # print(board.final_list())
-    # print(board.final_count())
+    while board.iterate() == True:
+        board.which_direction(int(board.current_location['row']),int(board.current_location['column']))
+    print(board.final_list())
+    print(board.final_count())
+    move_list = board.final_list()
+    length = len(move_list)
+    time.sleep(1)
+    for i in range(length - 1):
+        print(i)
+        navigation_lane(move_list[i])
+        time.sleep(1)
+        print('Leaving Navigation!')
+    navigation_leave()
 
-    print(board.current_location)
-    newstring = board.left(7,0)
-    board.set_current_location(newstring)
-    print(board.current_location)
-    print(int(board.current_location['row']))
-    print(int(board.current_location['column']))
-    board.which_direction(3,4)
-    print(board.current_location)
+
+
 
 
 class Navigation:
@@ -218,51 +223,51 @@ class Navigation:
         return self.board[row][col]
 
     def left(self, row, col):
-        edge = self.initial_return[self.token]['graph']['edges']['[' + str(row) + ',' + str(col) + ']']
         try:
+            edge = self.initial_return[self.token]['graph']['edges']['[' + str(row) + ',' + str(col) + ']']
             left = edge['left']
         except:
             return '-10000'
         return left
 
     def right(self, row, col):
-        edge = self.initial_return[self.token]['graph']['edges']['[' + str(row) + ',' + str(col) + ']']
         try:
+            edge = self.initial_return[self.token]['graph']['edges']['[' + str(row) + ',' + str(col) + ']']
             right = edge['right']
         except:
             return '-10000'
         return right
 
     def stay(self, row, col):
-        edge = self.initial_return[self.token]['graph']['edges']['[' + str(row) + ',' + str(col) + ']']
         try:
+            edge = self.initial_return[self.token]['graph']['edges']['[' + str(row) + ',' + str(col) + ']']
             stay = edge['stay']
         except:
             return '-10000'
         return stay
 
     def which_direction(self, row, col):
+        chosen_direction = ''
         left = self.left(row, col)
         right = self.right(row, col)
         stay = self.stay(row, col)
         if left > right and left > stay:
-            self.move_list.append('L')
+            self.move_list.append('left')
             chosen_direction = left
         elif right > left and right > stay:
-            self.move_list.append('R')
+            self.move_list.append('right')
             chosen_direction = right
         else:
-            self.move_list.append('S')
+            self.move_list.append('stay')
             chosen_direction = stay
         if stay == '-10000' and left == '-10000' and right == '-10000':
             map_leave()
             self.keep_going = False
-            print("Leaving Navigation!")
         else:
             for i in self.initial_return[self.token]['graph']['vertices']:
                 if i == chosen_direction:
                     self.weight_count = self.weight_count + self.initial_return[self.token]['graph']['vertices'][i]['weight']
-        self.current_location = self.set_current_location(chosen_direction)
+            self.set_current_location(chosen_direction)
 
 def go_to_nav_location():
     locations = ['bryggen', 'noerrebrogade', 'langelinie', 'dis']
@@ -272,6 +277,12 @@ def main():
     map_enter()
     go_to_location('langelinie')
     # go_to_location('christianshavn')
+    navigation_play()
+    go_to_location('bryggen')
+    navigation_play()
+    go_to_location('noerrebrogade')
+    navigation_play()
+    go_to_location('dis')
     navigation_play()
     # map_leave()
 
