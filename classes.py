@@ -14,6 +14,8 @@ class Navigation:
     token = ''
 
     def __init__(self, nav, token):
+        self.move_list = []
+        self.weight_count = 0
         self.initial_return = nav
         self.token = token
         self.board = [[0]*nav[token]['config']['size']['columns'] for i in range(nav[token]['config']['size']['rows'])]
@@ -80,7 +82,6 @@ class Navigation:
         left = self.left()
         right = self.right()
         stay = self.stay()
-        print(left, stay, right)
         if left > right and left > stay:
             self.move_list.append('left')
             chosen_direction = left
