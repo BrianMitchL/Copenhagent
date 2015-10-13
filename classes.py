@@ -99,16 +99,11 @@ class Navigation:
             self.set_current_location(chosen_direction)
 
     def is_complete(self):
-        if self.current_location['column'] == self.initial_return[self.token]['config']['size']['columns'] - 1:
-            return True
-        else:
-            return False
+        return True if self.current_location['column'] \
+                       == self.initial_return[self.token]['config']['size']['columns'] - 1 else False
 
     def is_dead_end(self):
-        if self.left < 0 and self.right < 0 and self.stay < 0:
-            return True
-        else:
-            return False
+        return True if self.left < 0 and self.right < 0 and self.stay < 0 else False
 
     def get_best_first_path(self):
         while not self.is_complete and not self.is_dead_end():
