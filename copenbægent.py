@@ -9,7 +9,6 @@ import requests
 import json
 from urllib.parse import urlencode
 import sys
-from collections import namedtuple
 from random import randint
 
 
@@ -160,37 +159,11 @@ def navigation_lane(dir):
 
 def navigation_play():
     nav = navigation_enter()
-    board = [[0]*nav[TOKEN]['config']['size']['columns'] for i in range(nav[TOKEN]['config']['size']['rows'])]
-    # new_board = namedtuple('Struct', board.keys())(*board.values())
-    # print(new_board)
-    for i in nav[TOKEN]['graph']['vertices']:
-        # print(nav[TOKEN]['graph']['vertices'][i])
-        board[int(nav[TOKEN]['graph']['vertices'][i]['row'])][int(nav[TOKEN]['graph']['vertices'][i]['column'])] \
-            = int(nav[TOKEN]['graph']['vertices'][i]['weight'])
-    loc = nav[TOKEN]['config']['initial']
-    tree_search(nav, loc)
-    board_pretty(board)
-    f = open('./output.txt', 'w+')
-    f.write(str(nav))
+    board = Navigation(nav, TOKEN)
+    board.print()
 
 
-def tree_search(nav, loc):
-    instruction_list = []
-    current_loc = loc
-    while current_loc < nav[TOKEN]['config']['size']['columns']:
-        left = nav[TOKEN]['graph']['edges'][]
-
-
-def board_pretty(board):
-    print(type(board))
-    for i in board:
-        print(i)
-
-
-
-
-class navigation():
-
+class Navigation:
     board = []
     current_location = {}
     initial_return = {}
@@ -200,37 +173,34 @@ class navigation():
         self.initial_return = nav
         self.token = token
         self.board = [[0]*nav[token]['config']['size']['columns'] for i in range(nav[token]['config']['size']['rows'])]
-        # new_board = namedtuple('Struct', board.keys())(*board.values())
-        # print(new_board)
         for i in nav[token]['graph']['vertices']:
-            # print(nav[TOKEN]['graph']['vertices'][i])
-            self.board[int(nav[token]['graph']['vertices'][i]['row'])][int(nav[token]['graph']['vertices'][i]['column'])] \
-                = int(nav[token]['graph']['vertices'][i]['weight'])
+            self.board[nav[token]['graph']['vertices'][i]['row']][nav[token]['graph']['vertices'][i]['column']] \
+                = nav[token]['graph']['vertices'][i]['weight']
         self.current_location = nav[token]['config']['initial']
 
+    def print(self):
+        print('Current location:', self.current_location)
+        for i in self.board:
+            print(i)
 
     def weight(self, row, col):
         return self.board[row][col]
-
 
     def left(self, row, col):
         edge = self.initial_return[self.token]['graph']['edges']['[' + row + ',' + col + ']']
         left = edge['left']
 
-
     def right(self, row, col):
         edge = self.initial_return[self.token]['graph']['edges']['[' + row + ',' + col + ']']
         right = edge['right']
-
 
     def stay(self, row, col):
         edge = self.initial_return[self.token]['graph']['edges']['[' + row + ',' + col + ']']
         stay = edge['stay']
 
 
-
-
-
+def go_to_nav_location():
+    locations = ['bryggen', 'noerrebrogade', 'langelinie', 'dis']
 
 
 def main():
