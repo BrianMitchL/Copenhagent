@@ -45,27 +45,30 @@ class Navigation:
     def weight(self, row, col):
         return self.board[row][col]
 
-    def left(self, row, col):
+    def left(self):
         try:
-            edge = self.initial_return[self.token]['graph']['edges']['[' + str(row) + ',' + str(col) + ']']
+            edge = self.initial_return[self.token]['graph']['edges']['[' + str(self.current_location['row']) + ',' +
+                                                                     str(self.current_location['column']) + ']']
             left = edge['left']
         except Exception as e:
             print(e)
             return '-10000'
         return left
 
-    def right(self, row, col):
+    def right(self):
         try:
-            edge = self.initial_return[self.token]['graph']['edges']['[' + str(row) + ',' + str(col) + ']']
+            edge = self.initial_return[self.token]['graph']['edges']['[' + str(self.current_location['row']) + ',' +
+                                                                     str(self.current_location['column']) + ']']
             right = edge['right']
         except Exception as e:
             print(e)
             return '-10000'
         return right
 
-    def stay(self, row, col):
+    def stay(self):
         try:
-            edge = self.initial_return[self.token]['graph']['edges']['[' + str(row) + ',' + str(col) + ']']
+            edge = self.initial_return[self.token]['graph']['edges']['[' + str(self.current_location['row']) + ',' +
+                                                                     str(self.current_location['column']) + ']']
             stay = edge['stay']
         except Exception as e:
             print(e)
@@ -74,9 +77,9 @@ class Navigation:
 
     def which_direction(self, row, col):
         chosen_direction = ''
-        left = self.left(row, col)
-        right = self.right(row, col)
-        stay = self.stay(row, col)
+        left = self.left()
+        right = self.right()
+        stay = self.stay()
         if left > right and left > stay:
             self.move_list.append('left')
             chosen_direction = left
@@ -94,3 +97,20 @@ class Navigation:
                     self.weight_count = self.weight_count \
                                         + self.initial_return[self.token]['graph']['vertices'][i]['weight']
             self.set_current_location(chosen_direction)
+
+    def is_complete(self):
+        if self.current_location['column'] == self.initial_return[self.token]['config']['size']['columns'] - 1:
+            return True
+        else:
+            return False
+
+    def is_dead_end(self):
+        if self.left < 0 and self.right < 0 and self.stay < 0:
+            return True
+        else:
+            return False
+
+    def get_best_first_path(self):
+        while not self.is_complete and not self.is_dead_end():
+            self.which_direction(self.current_location['row'], self.current_location['column'])
+        return self.move_list

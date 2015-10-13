@@ -167,7 +167,7 @@ def navigation_play():
     board = Navigation(nav, TOKEN)
     board.pretty_print()
     while board.iterate():
-        board.which_direction(int(board.current_location['row']), int(board.current_location['column']))
+        board.which_direction(board.current_location['row'], board.current_location['column'])
     print(board.final_list())
     print(board.final_count())
     move_list = board.final_list()
@@ -177,7 +177,6 @@ def navigation_play():
         print(i)
         navigation_lane(move_list[i])
         time.sleep(1)
-        print('Leaving Navigation!')
     navigation_leave()
 
 
