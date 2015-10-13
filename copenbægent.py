@@ -33,7 +33,10 @@ MAP = {}
 
 def call_api(url):
     s = requests.get(url, headers=TOKEN_HEADER)
-    print(url, "\x1B[92m" + str(s.status_code) + "\x1B[0m")
+    green = "\x1B[92m" + str(s.status_code) + "\x1B[0m"
+    red = "\x1B[91m" + str(s.status_code) + "\x1B[0m"
+    print(url, green) if s.status_code == 200 else print(url, red)
+    print(s.text)
     res = json.loads(s.text)
     # print(json.dumps(res, sort_keys=True, indent=4))
     return res
@@ -166,17 +169,12 @@ def navigation_play():
     nav = navigation_enter()
     board = Navigation(nav, TOKEN)
     board.pretty_print()
-    while board.iterate():
-        board.which_direction()
-    print(board.final_list())
-    print(board.final_count())
-    move_list = board.final_list()
-    length = len(move_list)
-    time.sleep(1)
-    for i in range(length - 1):
+    path = board.get_best_first_path()
+    print(path)
+    for i in range(len(path) - 1):
         print(i)
-        navigation_lane(move_list[i])
-        time.sleep(1)
+        navigation_lane(path[i])
+        time.sleep(0.5)
     navigation_leave()
 
 

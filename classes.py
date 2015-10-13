@@ -2,6 +2,7 @@
 # Brennan Kuo
 # Brian Mitchell
 # Linnea Sahlberg
+import time
 
 
 class Navigation:
@@ -11,7 +12,6 @@ class Navigation:
     current_location = {}
     initial_return = {}
     token = ''
-    keep_going = True
 
     def __init__(self, nav, token):
         self.initial_return = nav
@@ -22,12 +22,6 @@ class Navigation:
                 = nav[token]['graph']['vertices'][i]['weight']
         self.current_location = nav[token]['config']['initial']
 
-    def iterate(self):
-        return self.keep_going
-
-    def final_list(self):
-        return self.move_list
-
     def final_count(self):
         return self.weight_count
 
@@ -37,13 +31,20 @@ class Navigation:
         self.current_location['row'] = string[0]
         self.current_location['column'] = string[1]
 
+    def get_weight(self, string):
+        string = string[1:-1]
+        string = string.split(',')
+        row = int(string[0])
+        col = int(string[1])
+        return self.weight(row, col)
+
     def pretty_print(self):
         print('Current location:', self.current_location)
         for i in self.board:
             print(i)
 
     def weight(self, row, col):
-        return self.board[row][col]
+        return -10000 if row < 0 and col < 0 else self.board[row][col]
 
     def left(self):
         try:
@@ -52,7 +53,7 @@ class Navigation:
             left = edge['left']
         except Exception as e:
             print(e)
-            return '-10000'
+            return '[-1,-1]'
         return left
 
     def right(self):
@@ -62,7 +63,7 @@ class Navigation:
             right = edge['right']
         except Exception as e:
             print(e)
-            return '-10000'
+            return '[-1,-1]'
         return right
 
     def stay(self):
@@ -72,13 +73,14 @@ class Navigation:
             stay = edge['stay']
         except Exception as e:
             print(e)
-            return '-10000'
+            return '[-1,-1]'
         return stay
 
     def which_direction(self):
         left = self.left()
         right = self.right()
         stay = self.stay()
+        print(left, stay, right)
         if left > right and left > stay:
             self.move_list.append('left')
             chosen_direction = left
@@ -88,23 +90,23 @@ class Navigation:
         else:
             self.move_list.append('stay')
             chosen_direction = stay
-        if stay == '-10000' and left == '-10000' and right == '-10000':
-            self.keep_going = False
-        else:
-            for i in self.initial_return[self.token]['graph']['vertices']:
-                if i == chosen_direction:
-                    self.weight_count = self.weight_count \
-                                        + self.initial_return[self.token]['graph']['vertices'][i]['weight']
-            self.set_current_location(chosen_direction)
+        for i in self.initial_return[self.token]['graph']['vertices']:
+            if i == chosen_direction:
+                self.weight_count = self.weight_count \
+                                    + self.initial_return[self.token]['graph']['vertices'][i]['weight']
+        self.set_current_location(chosen_direction)
 
     def is_complete(self):
         return True if self.current_location['column'] \
                        == self.initial_return[self.token]['config']['size']['columns'] - 1 else False
 
     def is_dead_end(self):
-        return True if self.left < 0 and self.right < 0 and self.stay < 0 else False
+        left = self.left()
+        right = self.right()
+        stay = self.stay()
+        return True if self.get_weight(left) < -100 and self.get_weight(right) < -100 and self.get_weight(stay) < -100 else False
 
     def get_best_first_path(self):
-        while not self.is_complete and not self.is_dead_end():
+        while not self.is_complete() and not self.is_dead_end():
             self.which_direction()
         return self.move_list
