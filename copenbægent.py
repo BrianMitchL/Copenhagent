@@ -160,7 +160,7 @@ def navigation_lane(dir):
 def navigation_play():
     nav = navigation_enter()
     board = Navigation(nav, TOKEN)
-    board.print()
+    board.pretty_print()
 
 
 class Navigation:
@@ -178,7 +178,7 @@ class Navigation:
                 = nav[token]['graph']['vertices'][i]['weight']
         self.current_location = nav[token]['config']['initial']
 
-    def print(self):
+    def pretty_print(self):
         print('Current location:', self.current_location)
         for i in self.board:
             print(i)
