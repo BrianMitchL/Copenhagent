@@ -8,7 +8,7 @@
 import requests
 import json
 from urllib.parse import urlencode
-import sys
+import random
 import time
 from random import randint
 
@@ -24,7 +24,7 @@ def environment_connect(name):
 
 # Do the stuff here to get the token
 # TOKEN = sys.argv[1]
-TOKEN = environment_connect('Brian Mitchell' + str(randint(0,100000)))
+TOKEN = environment_connect('Brian Mitchell' + str(randint(0, 100000)))
 TOKEN_HEADER = {'agentToken': TOKEN}
 CURRENT_LOC = ''
 MAP = {}
@@ -44,7 +44,7 @@ Environment
 
 
 def environment_leave():
-    res = call_api('http://localhost:3000/api/environment/leave')
+    call_api('http://localhost:3000/api/environment/leave')
 
 
 """
@@ -62,25 +62,25 @@ def map_enter():
 
 def map_bike(location_id):
     global CURRENT_LOC
-    res = call_api('http://localhost:3000/api/map/bike?locationId=' + location_id)
+    call_api('http://localhost:3000/api/map/bike?locationId=' + location_id)
     CURRENT_LOC = location_id
     print('Current locationId:', CURRENT_LOC)
 
 
 def map_metro(direction):
     global CURRENT_LOC
-    res = call_api('http://localhost:3000/api/map/metro?direction=' + direction)
+    call_api('http://localhost:3000/api/map/metro?direction=' + direction)
     CURRENT_LOC = next(iter(MAP['state']['map']['metro'][CURRENT_LOC][direction]))
     print('Current locationId:', CURRENT_LOC)
 
 
 def map_leave():
     global CURRENT_LOC
-    res = call_api('http://localhost:3000/api/map/leave')
+    call_api('http://localhost:3000/api/map/leave')
     CURRENT_LOC = ''
 
 
-def go_to_location(location_id):  # where we are trying to go
+def go_to_location(location_id, callback):  # where we are trying to go
     print(CURRENT_LOC)
     cw_cost = 0
     ccw_cost = 0
@@ -107,6 +107,7 @@ def go_to_location(location_id):  # where we are trying to go
     else:
         map_bike(location_id)
         print('Biking to {0} costing 15'.format(location_id))
+    callback()
 
 
 def metro_to_location(location_id, direction):
@@ -134,8 +135,8 @@ def papersoccer_leave():
     return res
 
 
-def papersoccer_play(dir):
-    res = call_api('http://localhost:3000/api/papersoccer/lane?direction=' + dir)
+def papersoccer_play(direction):
+    res = call_api('http://localhost:3000/api/papersoccer/lane?direction=' + direction)
     return res
 
 
@@ -163,8 +164,8 @@ def navigation_play():
     nav = navigation_enter()
     board = Navigation(nav, TOKEN)
     board.pretty_print()
-    while board.iterate() == True:
-        board.which_direction(int(board.current_location['row']),int(board.current_location['column']))
+    while board.iterate():
+        board.which_direction(int(board.current_location['row']), int(board.current_location['column']))
     print(board.final_list())
     print(board.final_count())
     move_list = board.final_list()
@@ -176,9 +177,6 @@ def navigation_play():
         time.sleep(1)
         print('Leaving Navigation!')
     navigation_leave()
-
-
-
 
 
 class Navigation:
@@ -226,7 +224,8 @@ class Navigation:
         try:
             edge = self.initial_return[self.token]['graph']['edges']['[' + str(row) + ',' + str(col) + ']']
             left = edge['left']
-        except:
+        except Exception as e:
+            print(e)
             return '-10000'
         return left
 
@@ -234,7 +233,8 @@ class Navigation:
         try:
             edge = self.initial_return[self.token]['graph']['edges']['[' + str(row) + ',' + str(col) + ']']
             right = edge['right']
-        except:
+        except Exception as e:
+            print(e)
             return '-10000'
         return right
 
@@ -242,7 +242,8 @@ class Navigation:
         try:
             edge = self.initial_return[self.token]['graph']['edges']['[' + str(row) + ',' + str(col) + ']']
             stay = edge['stay']
-        except:
+        except Exception as e:
+            print(e)
             return '-10000'
         return stay
 
@@ -269,21 +270,15 @@ class Navigation:
                     self.weight_count = self.weight_count + self.initial_return[self.token]['graph']['vertices'][i]['weight']
             self.set_current_location(chosen_direction)
 
-def go_to_nav_location():
+
+def go_to_nav_location(callback):
     locations = ['bryggen', 'noerrebrogade', 'langelinie', 'dis']
+    go_to_location(random.choice(locations), callback)
 
 
 def main():
     map_enter()
-    go_to_location('langelinie')
-    # go_to_location('christianshavn')
-    navigation_play()
-    go_to_location('bryggen')
-    navigation_play()
-    go_to_location('noerrebrogade')
-    navigation_play()
-    go_to_location('dis')
-    navigation_play()
+    go_to_nav_location(navigation_play)
     # map_leave()
 
 main()
