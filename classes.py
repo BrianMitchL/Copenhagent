@@ -75,8 +75,7 @@ class Navigation:
             return '-10000'
         return stay
 
-    def which_direction(self, row, col):
-        chosen_direction = ''
+    def which_direction(self):
         left = self.left()
         right = self.right()
         stay = self.stay()
@@ -107,5 +106,5 @@ class Navigation:
 
     def get_best_first_path(self):
         while not self.is_complete and not self.is_dead_end():
-            self.which_direction(self.current_location['row'], self.current_location['column'])
+            self.which_direction()
         return self.move_list
