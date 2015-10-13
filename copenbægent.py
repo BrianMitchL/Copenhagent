@@ -161,9 +161,19 @@ def navigation_play():
     nav = navigation_enter()
     board = Navigation(nav, TOKEN)
     board.pretty_print()
+    print(board.current_location)
+    newstring = board.left(7,0)
+    board.set_current_location(newstring)
+    print(board.current_location)
+    print(int(board.current_location['row']))
+    print(int(board.current_location['column']))
+    board.which_direction(3,4)
+    print(board.current_location)
 
 
 class Navigation:
+    move_list = []
+    weight_count = 0
     board = []
     current_location = {}
     initial_return = {}
@@ -178,6 +188,12 @@ class Navigation:
                 = nav[token]['graph']['vertices'][i]['weight']
         self.current_location = nav[token]['config']['initial']
 
+    def set_current_location(self, string):
+        string = string[1:-1]
+        string = string.split(',')
+        self.current_location['row'] = string[0]
+        self.current_location['column'] = string[1]
+
     def pretty_print(self):
         print('Current location:', self.current_location)
         for i in self.board:
@@ -187,17 +203,50 @@ class Navigation:
         return self.board[row][col]
 
     def left(self, row, col):
-        edge = self.initial_return[self.token]['graph']['edges']['[' + row + ',' + col + ']']
-        left = edge['left']
+        edge = self.initial_return[self.token]['graph']['edges']['[' + str(row) + ',' + str(col) + ']']
+        try:
+            left = edge['left']
+        except:
+            return '-10000'
+        return left
 
     def right(self, row, col):
-        edge = self.initial_return[self.token]['graph']['edges']['[' + row + ',' + col + ']']
-        right = edge['right']
+        edge = self.initial_return[self.token]['graph']['edges']['[' + str(row) + ',' + str(col) + ']']
+        try:
+            right = edge['right']
+        except:
+            return '-10000'
+        return right
 
     def stay(self, row, col):
-        edge = self.initial_return[self.token]['graph']['edges']['[' + row + ',' + col + ']']
-        stay = edge['stay']
+        edge = self.initial_return[self.token]['graph']['edges']['[' + str(row) + ',' + str(col) + ']']
+        try:
+            stay = edge['stay']
+        except:
+            return '-10000'
+        return stay
 
+    def which_direction(self, row, col):
+        left = self.left(row, col)
+        right = self.right(row, col)
+        stay = self.stay(row, col)
+        if left > right and left > stay:
+            self.move_list.append('L')
+            chosen_direction = left
+        elif right > left and right > stay:
+            self.move_list.append('R')
+            chosen_direction = right
+        else:
+            self.move_list.append('S')
+            chosen_direction = stay
+        if stay == '-10000' and left == '-10000' and right == '-10000':
+            map_leave()
+            print("Leaving Navigation!")
+        else:
+            for i in self.initial_return[self.token]['graph']['vertices']:
+                if i == chosen_direction:
+                    self.weight_count = self.weight_count + self.initial_return[self.token]['graph']['vertices'][i]['weight']
+        self.current_location = self.set_current_location(chosen_direction)
 
 def go_to_nav_location():
     locations = ['bryggen', 'noerrebrogade', 'langelinie', 'dis']
