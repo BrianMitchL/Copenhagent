@@ -168,10 +168,17 @@ def navigation_play():
         board[int(nav[TOKEN]['graph']['vertices'][i]['row'])][int(nav[TOKEN]['graph']['vertices'][i]['column'])] \
             = int(nav[TOKEN]['graph']['vertices'][i]['weight'])
     loc = nav[TOKEN]['config']['initial']
+    tree_search(loc)
     board_pretty(board)
+    f = open('./output.txt', 'w+')
+    f.write(str(nav))
 
-def tree_search():
-    pass
+
+def tree_search(loc):
+    instruction_list = []
+    current_loc = loc
+    while
+
 
 def board_pretty(board):
     print(type(board))
