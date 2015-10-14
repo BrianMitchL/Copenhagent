@@ -48,40 +48,19 @@ class Navigation:
     def weight(self, row, col):
         return -10000 if row < 0 and col < 0 else self.board[row][col]
 
-    def left(self):
+    def direction(self, direction):
         try:
             edge = self.initial_return[self.token]['graph']['edges']['[' + str(self.current_location['row']) + ',' +
                                                                      str(self.current_location['column']) + ']']
-            left = edge['left']
+            return edge[direction]
         except Exception as e:
             print(e)
             return '[-1,-1]'
-        return left
-
-    def right(self):
-        try:
-            edge = self.initial_return[self.token]['graph']['edges']['[' + str(self.current_location['row']) + ',' +
-                                                                     str(self.current_location['column']) + ']']
-            right = edge['right']
-        except Exception as e:
-            print(e)
-            return '[-1,-1]'
-        return right
-
-    def stay(self):
-        try:
-            edge = self.initial_return[self.token]['graph']['edges']['[' + str(self.current_location['row']) + ',' +
-                                                                     str(self.current_location['column']) + ']']
-            stay = edge['stay']
-        except Exception as e:
-            print(e)
-            return '[-1,-1]'
-        return stay
 
     def which_direction(self):
-        left = self.left()
-        right = self.right()
-        stay = self.stay()
+        left = self.direction('left')
+        right = self.direction('right')
+        stay = self.direction('stay')
         if left > right and left > stay:
             self.move_list.append('left')
             chosen_direction = left
@@ -102,9 +81,9 @@ class Navigation:
                        == self.initial_return[self.token]['config']['size']['columns'] - 1 else False
 
     def is_dead_end(self):
-        left = self.left()
-        right = self.right()
-        stay = self.stay()
+        left = self.direction('left')
+        right = self.direction('right')
+        stay = self.direction('stay')
         return True if self.get_weight(left) < -100 and self.get_weight(right) < -100 and self.get_weight(stay) < -100 else False
 
     def get_best_first_path(self):
