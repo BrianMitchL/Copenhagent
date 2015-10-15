@@ -2,7 +2,6 @@
 # Brennan Kuo
 # Brian Mitchell
 # Linnea Sahlberg
-import time
 
 
 class Navigation:
