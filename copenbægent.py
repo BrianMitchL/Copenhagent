@@ -175,7 +175,7 @@ def navigation_play():
     for i in range(len(path) - 1):
         print(i)
         navigation_lane(path[i])
-        time.sleep(0.5)
+        # time.sleep(0.5)
     navigation_leave()
 
 
