@@ -31,12 +31,13 @@ CURRENT_LOC = ''
 MAP = {}
 
 
+
 def call_api(url):
     s = requests.get(url, headers=TOKEN_HEADER)
     green = "\x1B[92m" + str(s.status_code) + "\x1B[0m"
     red = "\x1B[91m" + str(s.status_code) + "\x1B[0m"
     print(url, green) if s.status_code == 200 else print(url, red)
-    print(s.text)
+    #print(s.text)
     res = json.loads(s.text)
     # print(json.dumps(res, sort_keys=True, indent=4))
     return res

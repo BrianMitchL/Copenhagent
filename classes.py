@@ -61,10 +61,10 @@ class Navigation:
         left = self.direction('left')
         right = self.direction('right')
         stay = self.direction('stay')
-        if left > right and left > stay:
+        if self.get_weight(left) > self.get_weight(right) and self.get_weight(left) > self.get_weight(stay):
             self.move_list.append('left')
             chosen_direction = left
-        elif right > left and right > stay:
+        elif self.get_weight(right) > self.get_weight(left) and self.get_weight(right) > self.get_weight(stay):
             self.move_list.append('right')
             chosen_direction = right
         else:
