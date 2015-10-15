@@ -12,6 +12,7 @@ import random
 import time
 from random import randint
 from classes import Navigation
+from classes import Papersoccer
 
 
 def environment_connect(name):
@@ -134,7 +135,7 @@ Papersoccer
 
 def papersoccer_enter():
     res = call_api('http://localhost:3000/api/papersoccer/enter')
-    return res['state']['papersoccer']
+    return res['state']['papersoccer'][TOKEN]
 
 
 def papersoccer_leave():
@@ -143,9 +144,26 @@ def papersoccer_leave():
 
 
 def papersoccer_play(direction):
-    res = call_api('http://localhost:3000/api/papersoccer/lane?direction=' + direction)
+    res = call_api('http://localhost:3000/api/papersoccer/play?direction=' + direction)
     return res
 
+
+def papersoccer_compete():
+    nav = papersoccer_enter()
+    board = Papersoccer(nav)
+    board.pretty_print()
+    while not board.game_complete():
+        turn = board.turn()
+        res = papersoccer_play(turn)
+        # time.sleep(1)
+        board.process_response(res, turn)
+    board.pretty_print()
+    papersoccer_leave()
+
+
+def go_to_papersoccer_location(callback):
+    locations = ['dis', 'jaegersborggade']
+    go_to_location(random.choice(locations), callback)
 
 """
 Navigation
@@ -199,6 +217,7 @@ def go_to_nav_location(callback):
 
 def main():
     map_enter()
+    # go_to_location('jaegersborggade', papersoccer_compete)
     while True:
         go_to_nav_location(navigation_play)
     # map_leave()
