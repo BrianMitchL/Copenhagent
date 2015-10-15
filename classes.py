@@ -83,7 +83,8 @@ class Navigation:
         left = self.direction('left')
         right = self.direction('right')
         stay = self.direction('stay')
-        return True if self.get_weight(left) < -100 and self.get_weight(right) < -100 and self.get_weight(stay) < -100 else False
+        return True if \
+            self.get_weight(left) < -100 and self.get_weight(right) < -100 and self.get_weight(stay) < -100 else False
 
     def get_best_first_path(self):
         while not self.is_complete() and not self.is_dead_end():
