@@ -126,7 +126,7 @@ def metro_to_location(location_id, direction):
         while location_id != CURRENT_LOC:
             map_metro('ccw')
     else:
-        print('FUCK YOU TELL ME WHERE YOU WANT TO GO')
+        print('Metro error')
 
 """
 Papersoccer
