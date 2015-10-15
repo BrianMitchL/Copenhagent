@@ -24,7 +24,8 @@ class Navigation:
         self.current_location = nav[token]['config']['initial']
 
     def final_count(self):
-        return self.weight_count
+        weight = self.weight_count / len(self.move_list)
+        return weight
 
     def set_current_location(self, string):
         string = string[1:-1]

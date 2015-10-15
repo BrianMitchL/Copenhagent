@@ -29,6 +29,8 @@ TOKEN = environment_connect('Brian Mitchell' + str(randint(0, 100000)))
 TOKEN_HEADER = {'agentToken': TOKEN}
 CURRENT_LOC = ''
 MAP = {}
+NAVIGATION_WEIGHT = []
+NAVIGATION_PLAYS = 0
 
 
 def call_api(url):
@@ -166,6 +168,8 @@ def navigation_lane(direction):
 
 
 def navigation_play():
+    global NAVIGATION_WEIGHT
+    global NAVIGATION_PLAYS
     nav = navigation_enter()
     board = Navigation(nav, TOKEN)
     board.pretty_print()
@@ -175,7 +179,17 @@ def navigation_play():
         print(i)
         navigation_lane(path[i])
         # time.sleep(0.5)
+    current_weight = board.final_count()
+    NAVIGATION_WEIGHT.append(current_weight)
+    NAVIGATION_PLAYS += NAVIGATION_PLAYS
     navigation_leave()
+
+
+def average_navigation_credits():
+    weight = 0
+    for i in NAVIGATION_WEIGHT:
+        weight = weight + i
+    return weight / NAVIGATION_PLAYS
 
 
 def go_to_nav_location(callback):
