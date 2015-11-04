@@ -4,6 +4,7 @@
 # Linnea Sahlberg
 import random
 import json
+import itertools
 
 
 class Navigation:
@@ -93,6 +94,179 @@ class Navigation:
         while not self.is_complete() and not self.is_dead_end():
             self.which_direction()
         return self.move_list
+
+
+
+class DFS:
+
+    def __init__(self, nav, token):
+        self.current_position = nav[token]['position']
+        self.move_list = []
+        self.size = nav[token]['config']['size']
+        self.board = [[0]*nav[token]['config']['size']['columns'] for i in range(nav[token]['config']['size']['rows'])]
+        for i in nav[token]['graph']['vertices']:
+            self.board[nav[token]['graph']['vertices'][i]['row']][nav[token]['graph']['vertices'][i]['column']] \
+                = nav[token]['graph']['vertices'][i]['weight']
+
+    def go_left(self, position):  # position is an object
+        row = position['row'] - 1
+        col = position['column'] + 1
+        return {'row':row, 'column': col}
+
+    def go_stay(self, position):
+        row = position['row']
+        col = position['column'] + 1
+        return {'row':row, 'column':col}
+
+    def go_right(self, position):
+        row = position['row'] + 1
+        col = position['column'] + 1
+        return {'row':row, 'column':col}
+
+    def get_weight(self, position):
+        return self.board[position['row']][position['column']]
+
+    def max_weight(self, stay, left, right):
+        dir_list = ['stay', 'left', 'right']
+        lst = []
+        lst.append(stay)
+        lst.append(left)
+        lst.append(right)
+        max_value = max(lst)
+        max_index = lst.index(max_value)
+        return max_value, dir_list[max_index]
+
+
+    def search(self, root, level):
+        #print('LEVEL ' + str(level))
+        current_pos = root
+        response = self.search_recursive(current_pos, level - 1)
+        return  response[0], response[1]
+
+    def search_recursive(self, current_pos, level):
+        #print(current_pos)
+        if level == 0:
+            return self.get_weight(current_pos), 'E'
+        else:
+            mv_lst = []
+            weight = None
+            if current_pos['row'] > 0 and current_pos['row'] < self.size['rows'] - 1:
+                #print('MIDDLE ROWS')
+                left_node = self.go_left(current_pos)
+                left_response = self.search_recursive(left_node, level - 1)
+                stay_node = self.go_stay(current_pos)
+                stay_response = self.search_recursive(stay_node, level - 1)
+                right_node = self.go_right(current_pos)
+                right_response = self.search_recursive(right_node, level - 1)
+
+                left_weight = self.get_weight(left_node)
+                stay_weight = self.get_weight(stay_node)
+                right_weight = self.get_weight(right_node)
+
+                highest = self.max_weight(stay_weight, left_weight, right_weight)
+                if highest[1] == 'left':
+                    #print('LEFT')
+                    weight = left_response[0]
+                    mv_lst = list(left_response[1])
+                elif highest[1] == 'stay':
+                    #print('STAY')
+                    weight = stay_response[0]
+                    mv_lst = list(stay_response[1])
+                elif highest[1] == 'right':
+                    #print('RIGHT')
+                    weight = right_response[0]
+                    mv_lst = list(right_response[1])
+                weight = weight + highest[0]
+                mv_lst.insert(0, highest[1])
+
+                return weight, mv_lst
+
+
+            elif current_pos['row'] <= 0:
+                #print('LEFT ROW LEFT EDGE')
+                stay_node = self.go_stay(current_pos)
+                stay_response = self.search_recursive(stay_node, level - 1)
+                right_node = self.go_right(current_pos)
+                right_response = self.search_recursive(right_node, level - 1)
+
+                stay_weight = self.get_weight(stay_node)
+                right_weight = self.get_weight(right_node)
+
+                highest = self.max_weight(stay_weight, -90000, right_weight)
+                if highest[1] == 'left':
+                    print('WHAT THE FUCKING HELL ARE YOU DOING GOING LEFT')
+                elif highest[1] == 'stay':
+                    #print('STAY')
+                    weight = stay_response[0]
+                    mv_lst = list(stay_response[1])
+                elif highest[1] == 'right':
+                    #print('RIGHT')
+                    weight = right_response[0]
+                    mv_lst = list(right_response[1])
+                weight = weight + highest[0]
+                mv_lst.insert(0, highest[1])
+
+                return weight, mv_lst
+
+            elif current_pos['row'] >= self.size['rows'] - 1:
+                #print('RIGHT ROW')
+                left_node = self.go_left(current_pos)
+                left_response = self.search_recursive(left_node, level - 1)
+                stay_node = self.go_stay(current_pos)
+                stay_response = self.search_recursive(stay_node, level - 1)
+
+                left_weight = self.get_weight(left_node)
+                stay_weight = self.get_weight(stay_node)
+
+                highest = self.max_weight(stay_weight, left_weight, -90000)
+                if highest[1] == 'left':
+                    #print('LEFT')
+                    weight = left_response[0]
+                    mv_lst = list(left_response[1])
+                elif highest[1] == 'stay':
+                    #print('STAY')
+                    weight = stay_response[0]
+                    mv_lst = list(stay_response[1])
+                elif highest[1] == 'right':
+                    print('WHAT THE FUCKING HELL ARE YOU DOING GOING RIGHT')
+                weight = weight + highest[0]
+                mv_lst.insert(0, highest[1])
+
+                return weight, mv_lst
+
+    def move_current_loc(self, lst, current_pos):
+        lst = lst
+        current_pos = current_pos
+        for i in lst:
+            if i == 'left':
+                current_pos = self.go_left(current_pos)
+            if i == 'stay':
+                current_pos = self.go_stay(current_pos)
+            if i == 'right':
+                current_pos = self.go_right(current_pos)
+            if i == 'E':
+                pass
+        return current_pos
+
+    def pseudo_main(self):
+        remaining_levels = self.size['columns']
+        while remaining_levels != 0:
+            if remaining_levels >= 5:
+                response = self.search(self.current_position, 5)
+                remaining_levels = remaining_levels - 4
+                local_move_list = response[1]
+                local_move_list = local_move_list[:-1]
+                self.move_list.append(local_move_list)
+                self.current_position = self.move_current_loc(response[1], self.current_position)
+            else:
+                response = self.search(self.current_position, remaining_levels)
+                remaining_levels = 0
+                local_move_list = response[1]
+                local_move_list = local_move_list[:-1]
+                self.move_list.append(local_move_list)
+                self.current_position = self.move_current_loc(response[1], self.current_position)
+        chain = itertools.chain.from_iterable(self.move_list)
+        return list(chain)
 
 
 class Papersoccer:

@@ -12,6 +12,7 @@ import random
 import time
 from random import randint
 from classes import Navigation
+from classes import DFS
 from classes import Papersoccer
 
 
@@ -184,6 +185,20 @@ def navigation_lane(direction):
     res = call_api('http://localhost:3000/api/navigation/lane?direction=' + direction)
     return res
 
+def dfs_play():
+    nav = navigation_enter()
+    board = DFS(nav, TOKEN)
+    path = board.pseudo_main()
+    print(path)
+    for i in range(len(path) - 1):
+        try:
+            navigation_lane(path[i])
+        except:
+            navigation_leave()
+            return
+        #time.sleep(0.5)
+    navigation_leave()
+
 
 def navigation_play():
     global NAVIGATION_WEIGHT
@@ -191,12 +206,16 @@ def navigation_play():
     nav = navigation_enter()
     board = Navigation(nav, TOKEN)
     board.pretty_print()
+
+    path = board.hill_climbing_path(5)
+    print(path)
+
     path = board.get_best_first_path()
     print(path)
     for i in range(len(path) - 1):
         print(i)
         navigation_lane(path[i])
-        # time.sleep(0.5)
+        time.sleep(0.5)
     current_weight = board.final_count()
     NAVIGATION_WEIGHT.append(current_weight)
     NAVIGATION_PLAYS += NAVIGATION_PLAYS
@@ -219,7 +238,9 @@ def main():
     map_enter()
     # go_to_location('jaegersborggade', papersoccer_compete)
     while True:
-        go_to_nav_location(navigation_play)
-    # map_leave()
+        go_to_nav_location(dfs_play)
+    # while True:
+    #     go_to_nav_location(navigation_play)
+    map_leave()
 
 main()
