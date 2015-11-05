@@ -3,10 +3,9 @@
 # Brian Mitchell
 # Linnea Sahlberg
 import random
-import json
 import itertools
-import time
 from copy import deepcopy
+import operator
 
 
 class Navigation:
@@ -144,6 +143,9 @@ class Soccerfield:
     def get_current_vertex(self):
         return self.current_vertex
 
+    def get_k(self):
+        return self.k
+
     def is_playable(self, orig, dest):
         if orig not in self.vertices or dest not in self.vertices:
             return False
@@ -162,7 +164,7 @@ class Soccerfield:
         directions = ['nw', 'w', 'ne', 'e', 'se', 's', 'sw', 'w']
         for i in range(len(directions)):
             if self.can_move(loc, directions[i]):
-                print('can move to', directions[i], self.can_move(loc, directions[i]))
+                # print('can move to', directions[i], self.can_move(loc, directions[i]))
                 return False
         print('\x1B[91mIT\'S A TRAP!\x1B[0m')
         return True
@@ -206,7 +208,7 @@ class Soccerfield:
             print('\x1B[91mNOT APPLICABLE. SOMETHING IS WRONG :\'(\x1B[0m')
 
 
-class PapersoccerAI:
+class PapersoccerAISimple:
     def __init__(self):
         print('\x1B[95m#ClassicLinnea\x1B[0m')
 
@@ -217,23 +219,74 @@ class PapersoccerAI:
         # print('e', soccerfield.can_move(soccerfield.get_current_vertex(), 'e'))
         # print('ne', soccerfield.can_move(soccerfield.get_current_vertex(), 'ne'))
         # print('se', soccerfield.can_move(soccerfield.get_current_vertex(), 'se'))
-        print(soccerfield.get_current_vertex())
+        # print(soccerfield.get_current_vertex())
         for i in range(len(priority1)):
             truth = soccerfield.can_move(soccerfield.get_current_vertex(), priority1[i])
             if truth:
-                print(priority1[i], truth)
+                # print(priority1[i], truth)
                 return priority1[i]
         for i in range(len(priority2)):
             truth = soccerfield.can_move(soccerfield.get_current_vertex(), priority2[i])
             if truth:
-                print(priority2[i], truth)
+                # print(priority2[i], truth)
                 return priority2[i]
         for i in range(len(priority3)):
             truth = soccerfield.can_move(soccerfield.get_current_vertex(), priority3[i])
             if truth:
-                print(priority3[i], truth)
+                # print(priority3[i], truth)
                 return priority3[i]
         return "no move"
+
+
+class PapersoccerAINotAsSimple:
+    def __init__(self):
+        print('\x1B[95m#ClassicBrian\x1B[0m')
+
+    def prefer_visited(self, soccerfield, directions):
+        nd = deepcopy(directions)
+        loc = soccerfield.get_current_vertex()
+        for direction, weight in directions.items():
+            is_visited = soccerfield.is_visited(loc, direction)
+            if is_visited and 'e' in direction:
+                nd[direction] = weight + 1
+            elif is_visited and 'w' in direction:
+                nd[direction] = weight - 0.5
+            elif is_visited:
+                nd[direction] = weight + 0.5
+        return nd
+
+    def get_highest_value(self, obj):
+        m = -100000
+        for k, v in obj.items():
+            if v > m:
+                m = v
+        ret = {}
+        for k, v, in obj.items():
+            if v == m:
+                ret[k] = v
+        return ret
+
+    def get_direction(self, soccerfield):
+        loc = soccerfield.get_current_vertex()
+        directions = {'e': 2,
+                      'ne': 2,
+                      'se': 2,
+                      'n': 1,
+                      's': 1,
+                      'nw': 0,
+                      'sw': 0,
+                      'w': 0}
+        nd = deepcopy(directions)
+        for k, v in directions.items():
+            if not soccerfield.can_move(loc, k):
+                nd.pop(k)
+
+        options = self.prefer_visited(soccerfield, nd)
+        highest_value = self.get_highest_value(options)
+        if len(highest_value) > 0:
+            return random.choice(list(highest_value))
+        else:
+            return 'no move'
 
 
 class DFS:
@@ -250,17 +303,17 @@ class DFS:
     def go_left(self, position):  # position is an object
         row = position['row'] - 1
         col = position['column'] + 1
-        return {'row':row, 'column': col}
+        return {'row': row, 'column': col}
 
     def go_stay(self, position):
         row = position['row']
         col = position['column'] + 1
-        return {'row':row, 'column':col}
+        return {'row': row, 'column': col}
 
     def go_right(self, position):
         row = position['row'] + 1
         col = position['column'] + 1
-        return {'row':row, 'column':col}
+        return {'row': row, 'column': col}
 
     def get_weight(self, position):
         return self.board[position['row']][position['column']]
@@ -298,13 +351,13 @@ class DFS:
                 self.get_weight(left) < -100 and self.get_weight(stay) < -100 else False
 
     def search(self, root, level):
-        #print('LEVEL ' + str(level))
+        # print('LEVEL ' + str(level))
         current_pos = root
         response = self.search_recursive(current_pos, level - 1)
-        return  response[0], response[1]
+        return response[0], response[1]
 
     def search_recursive(self, current_pos, level):
-        #print(current_pos)
+        # print(current_pos)
         if level == 0:
             return self.get_weight(current_pos), 'E'
         if self.is_dead_end(current_pos):
@@ -313,7 +366,7 @@ class DFS:
             mv_lst = []
             weight = None
             if current_pos['row'] > 0 and current_pos['row'] < self.size['rows'] - 1:
-                #print('MIDDLE ROWS')
+                # print('MIDDLE ROWS')
                 left_node = self.go_left(current_pos)
                 left_response = self.search_recursive(left_node, level - 1)
                 stay_node = self.go_stay(current_pos)
@@ -327,15 +380,15 @@ class DFS:
 
                 highest = self.max_weight(stay_weight, left_weight, right_weight)
                 if highest[1] == 'left':
-                    #print('LEFT')
+                    # print('LEFT')
                     weight = left_response[0]
                     mv_lst = list(left_response[1])
                 elif highest[1] == 'stay':
-                    #print('STAY')
+                    # print('STAY')
                     weight = stay_response[0]
                     mv_lst = list(stay_response[1])
                 elif highest[1] == 'right':
-                    #print('RIGHT')
+                    # print('RIGHT')
                     weight = right_response[0]
                     mv_lst = list(right_response[1])
                 weight = weight + highest[0]
@@ -343,9 +396,8 @@ class DFS:
 
                 return weight, mv_lst
 
-
             elif current_pos['row'] <= 0:
-                #print('LEFT ROW LEFT EDGE')
+                # print('LEFT ROW LEFT EDGE')
                 stay_node = self.go_stay(current_pos)
                 stay_response = self.search_recursive(stay_node, level - 1)
                 right_node = self.go_right(current_pos)
@@ -358,11 +410,11 @@ class DFS:
                 if highest[1] == 'left':
                     print('WHAT THE FUCKING HELL ARE YOU DOING GOING LEFT')
                 elif highest[1] == 'stay':
-                    #print('STAY')
+                    # print('STAY')
                     weight = stay_response[0]
                     mv_lst = list(stay_response[1])
                 elif highest[1] == 'right':
-                    #print('RIGHT')
+                    # print('RIGHT')
                     weight = right_response[0]
                     mv_lst = list(right_response[1])
                 weight = weight + highest[0]
@@ -371,7 +423,7 @@ class DFS:
                 return weight, mv_lst
 
             elif current_pos['row'] >= self.size['rows'] - 1:
-                #print('RIGHT ROW')
+                # print('RIGHT ROW')
                 left_node = self.go_left(current_pos)
                 left_response = self.search_recursive(left_node, level - 1)
                 stay_node = self.go_stay(current_pos)
@@ -382,11 +434,11 @@ class DFS:
 
                 highest = self.max_weight(stay_weight, left_weight, -90000)
                 if highest[1] == 'left':
-                    #print('LEFT')
+                    # print('LEFT')
                     weight = left_response[0]
                     mv_lst = list(left_response[1])
                 elif highest[1] == 'stay':
-                    #print('STAY')
+                    # print('STAY')
                     weight = stay_response[0]
                     mv_lst = list(stay_response[1])
                 elif highest[1] == 'right':
@@ -415,7 +467,7 @@ class DFS:
         while remaining_levels != 0:
             if remaining_levels >= 5:
                 response = self.search(self.current_position, 5)
-                remaining_levels = remaining_levels - 4
+                remaining_levels -= 4
                 local_move_list = response[1]
                 local_move_list = local_move_list[:-1]
                 self.move_list.append(local_move_list)

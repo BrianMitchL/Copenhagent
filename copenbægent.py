@@ -13,7 +13,8 @@ import time
 from random import randint
 from classes import Navigation
 from classes import DFS
-from classes import PapersoccerAI
+from classes import PapersoccerAISimple
+from classes import PapersoccerAINotAsSimple
 from classes import Soccerfield
 
 
@@ -153,13 +154,18 @@ def papersoccer_play(direction):
 def papersoccer_compete():
     nav = papersoccer_enter()
     field = Soccerfield(nav)
-    ai = PapersoccerAI()
+    if field.get_k() < 2:
+        print("\x1B[91mSimple AI\x1B[0m")
+        ai = PapersoccerAISimple()
+    else:
+        print("\x1B[91mComplex AI\x1B[0m")
+        ai = PapersoccerAINotAsSimple()
     while not field.terminal_test():
         move = ai.get_direction(field)
         res = papersoccer_play(move)
         # print(json.dumps(res, sort_keys=True, indent=2))
         field.process_response(res, move)
-        time.sleep(1)
+        # time.sleep(0.25)
     papersoccer_leave()
 
 
@@ -210,7 +216,7 @@ def navigation_play():
     for i in range(len(path) - 1):
         print(i)
         navigation_lane(path[i])
-        time.sleep(0.5)
+        # time.sleep(0.5)
     current_weight = board.final_count()
     NAVIGATION_WEIGHT.append(current_weight)
     NAVIGATION_PLAYS += NAVIGATION_PLAYS
@@ -231,10 +237,11 @@ def go_to_nav_location(callback):
 
 def main():
     map_enter()
-    #go_to_location('dis', papersoccer_compete)
+    # go_to_location('dis', papersoccer_compete)
     while True:
+        go_to_papersoccer_location(papersoccer_compete)
         go_to_nav_location(dfs_play)
-    map_leave()
+    # map_leave()
     # environment_leave()
 
 main()
