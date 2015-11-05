@@ -141,31 +141,36 @@ def find_seed_map():
     loc = ''
     game = ''
     mode = ''
-    seed = 0
+    seed = -10000
     navigation_seed = 0
     papersoccer_seed = 0  # start these with some higher values to add a weight towards a type of game?
     for i in range(len(NAVIGATION_LOCATIONS)):
-        navigation_seed += \
+        navigation_seed = \
             MAP['state']['map']['locations'][NAVIGATION_LOCATIONS[i]]['activities']['navigation']['config']['seed']
         cheapest = cheapest_path(NAVIGATION_LOCATIONS[i])
-        cost = cheapest[0]
+        cost = cheapest[0] * 1.0
         if navigation_seed/cost > seed/cost:
             seed = navigation_seed
             loc = NAVIGATION_LOCATIONS[i]
             game = 'navigation'
             mode = cheapest[1]
+            # print('nav', navigation_seed, loc, mode, game)
     for j in range(len(PAPERSOCCER_LOCATIONS)):
-        papersoccer_seed += \
+        papersoccer_seed = \
             MAP['state']['map']['locations'][PAPERSOCCER_LOCATIONS[j]]['activities']['papersoccer']['config']['seed']
         cheapest = cheapest_path(PAPERSOCCER_LOCATIONS[j])
-        cost = cheapest[0]
-        if papersoccer_seed/cost > seed/cost:
+        cost = cheapest[0] * 1.0
+        if (papersoccer_seed + 4)/cost > seed/cost:  # change this number to tweak game preference
             seed = papersoccer_seed
             loc = PAPERSOCCER_LOCATIONS[j]
             game = 'papersoccer'
             mode = cheapest[1]
+            # print('papersoccer', papersoccer_seed, loc, mode, game)
+    # print('nav seed', navigation_seed)
+    # print('pap seed', papersoccer_seed)
     # print('Seed is: ' + str(seed))
     # print('loc is: ' + loc)
+    # time.sleep(2)
     return loc, mode, game
 
 
@@ -194,7 +199,6 @@ def cheapest_path(location_id):
         # print('Taking the metro ccw to {0} costing {1}'.format(location_id, ccw_cost))
         return ccw_cost, 'ccw'
     else:
-        map_bike(location_id)
         # print('Biking to {0} costing 15'.format(location_id))
         return 15, 'bike'
 
