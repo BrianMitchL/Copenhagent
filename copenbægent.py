@@ -185,6 +185,7 @@ def navigation_lane(direction):
     res = call_api('http://localhost:3000/api/navigation/lane?direction=' + direction)
     return res
 
+
 def dfs_play():
     nav = navigation_enter()
     board = DFS(nav, TOKEN)
@@ -196,7 +197,7 @@ def dfs_play():
         except:
             navigation_leave()
             return
-        #time.sleep(0.5)
+        # time.sleep(0.5)
     navigation_leave()
 
 
