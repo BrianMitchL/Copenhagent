@@ -37,7 +37,9 @@ CURRENT_LOC = ''
 MAP = {}
 NAVIGATION_WEIGHT = []
 NAVIGATION_PLAYS = 0
-
+SEED = 0
+NAVIGATION_LOCATIONS = ['noerrebrogade', 'dis', 'bryggen', 'langelinie']
+PAPERSOCCER_LOCATIONS = ['dis', 'jaegersborggade'] #parken not included
 
 def call_api(endpoint):
     url = BASE_URL + endpoint
@@ -50,6 +52,66 @@ def call_api(endpoint):
     # print(json.dumps(res, sort_keys=True, indent=4))
     return res
 
+def find_seed_map():
+    global NAVIGATION_SEED, PAPERSOCCER_SEED, LOCATIONS, SEED
+    loc = ''
+    game = ''
+    res = call_api('map/enter')
+    for i in range(len(NAVIGATION_LOCATIONS)):
+        NAVIGATION_SEED = res['state']['map']['locations'][NAVIGATION_LOCATIONS[i]]['activities']['navigation']['config']['seed']
+        cost = cheapest_path(NAVIGATION_LOCATIONS[i])
+        if NAVIGATION_SEED/cost > SEED/cost:
+            SEED = NAVIGATION_SEED
+            loc = NAVIGATION_LOCATIONS[i]
+            game = 'navigation'
+    for j in range(len(PAPERSOCCER_LOCATIONS)):
+        PAPERSOCCER_SEED = res['state']['map']['locations'][PAPERSOCCER_LOCATIONS[j]]['activities']['papersoccer']['config']['seed']
+        cost = cheapest_path(PAPERSOCCER_LOCATIONS[j])
+        if PAPERSOCCER_SEED/cost > SEED/cost:
+            SEED = PAPERSOCCER_SEED
+            loc = PAPERSOCCER_LOCATIONS[j]
+            game = 'papersoccer'
+    print('Seed is: ' + str(SEED))
+    print('loc is: ' + loc)
+    return (loc, game)
+
+def cheapest_path(location_id):
+    print(CURRENT_LOC)
+    cw_cost = 0
+    ccw_cost = 0
+    metro = MAP['state']['map']['metro']
+    #print(metro)
+    new_cw_loc = next(iter(metro[CURRENT_LOC]['cw']))
+    new_ccw_loc = next(iter(metro[CURRENT_LOC]['ccw']))
+    ccw_cost = ccw_cost + metro[CURRENT_LOC]['ccw'][new_ccw_loc]
+    cw_cost = cw_cost + metro[CURRENT_LOC]['cw'][new_cw_loc]
+    while location_id != new_cw_loc:
+	    newer_cw_loc = next(iter(metro[new_cw_loc]['cw']))
+	    cw_cost = cw_cost + metro[new_cw_loc]['cw'][newer_cw_loc]
+	    new_cw_loc = newer_cw_loc
+    while location_id != new_ccw_loc:
+	    newer_ccw_loc = next(iter(metro[new_ccw_loc]['ccw']))
+	    ccw_cost = ccw_cost + metro[new_ccw_loc]['ccw'][newer_ccw_loc]
+	    new_ccw_loc = newer_ccw_loc
+    if cw_cost <= ccw_cost and cw_cost < 15:
+        print('Taking the metro cw to {0} costing {1}'.format(location_id, cw_cost))
+        return cw_cost
+    elif ccw_cost < cw_cost and ccw_cost < 15:
+        print('Taking the metro ccw to {0} costing {1}'.format(location_id, ccw_cost))
+        return ccw_cost
+    else:
+        map_bike(location_id)
+        print('Biking to {0} costing 15'.format(location_id))
+        return 15
+
+
+# cw_cost is the cost to get to location_id going cw on the metro
+# ccw_cost is the cost to get to location_id going ccw on the metro
+# biking is always 15
+#def find_seed_navigation():
+
+
+#def find_seed_papersoccer():
 
 """
 Environment
@@ -174,7 +236,10 @@ def papersoccer_compete():
 
 def go_to_papersoccer_location(callback):
     locations = ['dis', 'jaegersborggade']
-    go_to_location(random.choice(locations), callback)
+    #go_to_location(random.choice(locations), callback)
+    location = find_seed_map()[0]
+    if find_seed_map()[1] == 'papersoccer':
+        go_to_location(location, callback)
 
 """
 Navigation
@@ -235,7 +300,10 @@ def average_navigation_credits():
 
 def go_to_nav_location(callback):
     locations = ['bryggen', 'noerrebrogade', 'langelinie', 'dis']
-    go_to_location(random.choice(locations), callback)
+    #go_to_location(random.choice(locations), callback)
+    location = find_seed_map()[0]
+    if find_seed_map()[1] == 'navigation':
+        go_to_location(location, callback)
 
 
 def main():
