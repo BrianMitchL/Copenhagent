@@ -13,7 +13,6 @@ import time
 from random import randint
 from classes import Navigation
 from classes import DFS
-from classes import Papersoccer
 from classes import PapersoccerAI
 from classes import Soccerfield
 
@@ -194,11 +193,7 @@ def dfs_play():
     path = board.pseudo_main()
     print(path)
     for i in range(len(path) - 1):
-        try:
-            navigation_lane(path[i])
-        except:
-            navigation_leave()
-            return
+        navigation_lane(path[i])
         # time.sleep(0.5)
     navigation_leave()
 
@@ -236,10 +231,10 @@ def go_to_nav_location(callback):
 
 def main():
     map_enter()
-    go_to_location('dis', papersoccer_compete)
-    # while True:
-    #     go_to_nav_location(dfs_play)
-    # map_leave()
+    #go_to_location('dis', papersoccer_compete)
+    while True:
+        go_to_nav_location(dfs_play)
+    map_leave()
     # environment_leave()
 
 main()

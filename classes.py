@@ -275,6 +275,27 @@ class DFS:
         max_index = lst.index(max_value)
         return max_value, dir_list[max_index]
 
+    def is_dead_end(self, position):
+        col_loc = position['column']
+        if col_loc >= self.size['columns'] - 1:
+            return True
+        else:
+            if position['row'] > 0 and position['row'] < self.size['rows'] - 1:
+                left = self.go_left(position)
+                right = self.go_right(position)
+                stay = self.go_stay(position)
+                return True if \
+                    self.get_weight(left) < -100 and self.get_weight(right) < -100 and self.get_weight(stay) < -100 else False
+            elif position['row'] <= 0:
+                right = self.go_right(position)
+                stay = self.go_stay(position)
+                return True if \
+                    self.get_weight(right) < -100 and self.get_weight(stay) < -100 else False
+            elif position['row'] >= self.size['rows'] - 1:
+                left = self.go_left(position)
+                stay = self.go_stay(position)
+                return True if \
+                self.get_weight(left) < -100 and self.get_weight(stay) < -100 else False
 
     def search(self, root, level):
         #print('LEVEL ' + str(level))
@@ -285,6 +306,8 @@ class DFS:
     def search_recursive(self, current_pos, level):
         #print(current_pos)
         if level == 0:
+            return self.get_weight(current_pos), 'E'
+        if self.is_dead_end(current_pos):
             return self.get_weight(current_pos), 'E'
         else:
             mv_lst = []
