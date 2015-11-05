@@ -213,28 +213,11 @@ class PapersoccerAISimple:
         print('\x1B[95m#ClassicLinnea\x1B[0m')
 
     def get_direction(self, soccerfield):
-        priority1 = ['e', 'ne', 'se']
-        priority2 = ['n', 's']
-        priority3 = ['sw', 'nw', 'w']
-        # print('e', soccerfield.can_move(soccerfield.get_current_vertex(), 'e'))
-        # print('ne', soccerfield.can_move(soccerfield.get_current_vertex(), 'ne'))
-        # print('se', soccerfield.can_move(soccerfield.get_current_vertex(), 'se'))
-        # print(soccerfield.get_current_vertex())
-        for i in range(len(priority1)):
-            truth = soccerfield.can_move(soccerfield.get_current_vertex(), priority1[i])
+        priority_list = ['e', 'ne', 'se', 'n', 's', 'sw', 'nw', 'w']
+        for i in range(len(priority_list)):
+            truth = soccerfield.can_move(soccerfield.get_current_vertex(), priority_list[i])
             if truth:
-                # print(priority1[i], truth)
-                return priority1[i]
-        for i in range(len(priority2)):
-            truth = soccerfield.can_move(soccerfield.get_current_vertex(), priority2[i])
-            if truth:
-                # print(priority2[i], truth)
-                return priority2[i]
-        for i in range(len(priority3)):
-            truth = soccerfield.can_move(soccerfield.get_current_vertex(), priority3[i])
-            if truth:
-                # print(priority3[i], truth)
-                return priority3[i]
+                return priority_list[i]
         return "no move"
 
 
