@@ -17,10 +17,12 @@ from classes import PapersoccerAISimple
 from classes import PapersoccerAINotAsSimple
 from classes import Soccerfield
 
+BASE_URL = 'http://localhost:3000/api/'
+
 
 def environment_connect(name):
     params = {'name': name}
-    r = requests.get('http://localhost:3000/api/environment/connect?' + urlencode(params))
+    r = requests.get(BASE_URL + 'environment/connect?' + urlencode(params))
     print(r.status_code)
     res = json.loads(r.text)
     print(res['agentToken'])
@@ -37,7 +39,8 @@ NAVIGATION_WEIGHT = []
 NAVIGATION_PLAYS = 0
 
 
-def call_api(url):
+def call_api(endpoint):
+    url = BASE_URL + endpoint
     s = requests.get(url, headers=TOKEN_HEADER)
     green = "\x1B[92m" + str(s.status_code) + "\x1B[0m"
     red = "\x1B[91m" + str(s.status_code) + "\x1B[0m"
@@ -54,7 +57,7 @@ Environment
 
 
 def environment_leave():
-    call_api('http://localhost:3000/api/environment/leave')
+    call_api('environment/leave')
 
 
 """
@@ -64,7 +67,7 @@ Map
 
 def map_enter():
     global CURRENT_LOC, MAP
-    res = call_api('http://localhost:3000/api/map/enter')
+    res = call_api('map/enter')
     MAP = res
     CURRENT_LOC = res['state']['agents'][TOKEN]['locationId']
     print('Current locationId:', CURRENT_LOC)
@@ -72,21 +75,21 @@ def map_enter():
 
 def map_bike(location_id):
     global CURRENT_LOC
-    call_api('http://localhost:3000/api/map/bike?locationId=' + location_id)
+    call_api('map/bike?locationId=' + location_id)
     CURRENT_LOC = location_id
     print('Current locationId:', CURRENT_LOC)
 
 
 def map_metro(direction):
     global CURRENT_LOC
-    call_api('http://localhost:3000/api/map/metro?direction=' + direction)
+    call_api('map/metro?direction=' + direction)
     CURRENT_LOC = next(iter(MAP['state']['map']['metro'][CURRENT_LOC][direction]))
     print('Current locationId:', CURRENT_LOC)
 
 
 def map_leave():
     global CURRENT_LOC
-    call_api('http://localhost:3000/api/map/leave')
+    call_api('map/leave')
     CURRENT_LOC = ''
 
 
@@ -137,17 +140,17 @@ Papersoccer
 
 
 def papersoccer_enter():
-    res = call_api('http://localhost:3000/api/papersoccer/enter')
+    res = call_api('papersoccer/enter')
     return res['state']['papersoccer'][TOKEN]
 
 
 def papersoccer_leave():
-    res = call_api('http://localhost:3000/api/papersoccer/leave')
+    res = call_api('papersoccer/leave')
     return res
 
 
 def papersoccer_play(direction):
-    res = call_api('http://localhost:3000/api/papersoccer/play?direction=' + direction)
+    res = call_api('papersoccer/play?direction=' + direction)
     return res
 
 
@@ -179,17 +182,17 @@ Navigation
 
 
 def navigation_enter():
-    res = call_api('http://localhost:3000/api/navigation/enter')
+    res = call_api('navigation/enter')
     return res['state']['navigation']
 
 
 def navigation_leave():
-    res = call_api('http://localhost:3000/api/navigation/leave')
+    res = call_api('navigation/leave')
     return res
 
 
 def navigation_lane(direction):
-    res = call_api('http://localhost:3000/api/navigation/lane?direction=' + direction)
+    res = call_api('navigation/lane?direction=' + direction)
     return res
 
 
@@ -241,7 +244,7 @@ def main():
     while True:
         go_to_papersoccer_location(papersoccer_compete)
         go_to_nav_location(dfs_play)
-    # map_leave()
-    # environment_leave()
+    map_leave()
+    environment_leave()
 
 main()
