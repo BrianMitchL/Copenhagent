@@ -207,9 +207,6 @@ def navigation_play():
     board = Navigation(nav, TOKEN)
     board.pretty_print()
 
-    path = board.hill_climbing_path(5)
-    print(path)
-
     path = board.get_best_first_path()
     print(path)
     for i in range(len(path) - 1):
