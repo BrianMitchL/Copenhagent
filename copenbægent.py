@@ -37,9 +37,9 @@ CURRENT_LOC = ''
 MAP = {}
 NAVIGATION_WEIGHT = []
 NAVIGATION_PLAYS = 0
-SEED = 0
 NAVIGATION_LOCATIONS = ['noerrebrogade', 'dis', 'bryggen', 'langelinie']
-PAPERSOCCER_LOCATIONS = ['dis', 'jaegersborggade'] #parken not included
+PAPERSOCCER_LOCATIONS = ['dis', 'jaegersborggade']  # parken not included
+
 
 def call_api(endpoint):
     url = BASE_URL + endpoint
@@ -51,67 +51,6 @@ def call_api(endpoint):
     res = json.loads(s.text)
     # print(json.dumps(res, sort_keys=True, indent=4))
     return res
-
-def find_seed_map():
-    global NAVIGATION_SEED, PAPERSOCCER_SEED, LOCATIONS, SEED
-    loc = ''
-    game = ''
-    res = call_api('map/enter')
-    for i in range(len(NAVIGATION_LOCATIONS)):
-        NAVIGATION_SEED = res['state']['map']['locations'][NAVIGATION_LOCATIONS[i]]['activities']['navigation']['config']['seed']
-        cost = cheapest_path(NAVIGATION_LOCATIONS[i])
-        if NAVIGATION_SEED/cost > SEED/cost:
-            SEED = NAVIGATION_SEED
-            loc = NAVIGATION_LOCATIONS[i]
-            game = 'navigation'
-    for j in range(len(PAPERSOCCER_LOCATIONS)):
-        PAPERSOCCER_SEED = res['state']['map']['locations'][PAPERSOCCER_LOCATIONS[j]]['activities']['papersoccer']['config']['seed']
-        cost = cheapest_path(PAPERSOCCER_LOCATIONS[j])
-        if PAPERSOCCER_SEED/cost > SEED/cost:
-            SEED = PAPERSOCCER_SEED
-            loc = PAPERSOCCER_LOCATIONS[j]
-            game = 'papersoccer'
-    print('Seed is: ' + str(SEED))
-    print('loc is: ' + loc)
-    return (loc, game)
-
-def cheapest_path(location_id):
-    print(CURRENT_LOC)
-    cw_cost = 0
-    ccw_cost = 0
-    metro = MAP['state']['map']['metro']
-    #print(metro)
-    new_cw_loc = next(iter(metro[CURRENT_LOC]['cw']))
-    new_ccw_loc = next(iter(metro[CURRENT_LOC]['ccw']))
-    ccw_cost = ccw_cost + metro[CURRENT_LOC]['ccw'][new_ccw_loc]
-    cw_cost = cw_cost + metro[CURRENT_LOC]['cw'][new_cw_loc]
-    while location_id != new_cw_loc:
-	    newer_cw_loc = next(iter(metro[new_cw_loc]['cw']))
-	    cw_cost = cw_cost + metro[new_cw_loc]['cw'][newer_cw_loc]
-	    new_cw_loc = newer_cw_loc
-    while location_id != new_ccw_loc:
-	    newer_ccw_loc = next(iter(metro[new_ccw_loc]['ccw']))
-	    ccw_cost = ccw_cost + metro[new_ccw_loc]['ccw'][newer_ccw_loc]
-	    new_ccw_loc = newer_ccw_loc
-    if cw_cost <= ccw_cost and cw_cost < 15:
-        print('Taking the metro cw to {0} costing {1}'.format(location_id, cw_cost))
-        return cw_cost
-    elif ccw_cost < cw_cost and ccw_cost < 15:
-        print('Taking the metro ccw to {0} costing {1}'.format(location_id, ccw_cost))
-        return ccw_cost
-    else:
-        map_bike(location_id)
-        print('Biking to {0} costing 15'.format(location_id))
-        return 15
-
-
-# cw_cost is the cost to get to location_id going cw on the metro
-# ccw_cost is the cost to get to location_id going ccw on the metro
-# biking is always 15
-#def find_seed_navigation():
-
-
-#def find_seed_papersoccer():
 
 """
 Environment
@@ -132,21 +71,21 @@ def map_enter():
     res = call_api('map/enter')
     MAP = res
     CURRENT_LOC = res['state']['agents'][TOKEN]['locationId']
-    print('Current locationId:', CURRENT_LOC)
+    # print('Current locationId:', CURRENT_LOC)
 
 
 def map_bike(location_id):
     global CURRENT_LOC
     call_api('map/bike?locationId=' + location_id)
     CURRENT_LOC = location_id
-    print('Current locationId:', CURRENT_LOC)
+    # print('Current locationId:', CURRENT_LOC)
 
 
 def map_metro(direction):
     global CURRENT_LOC
     call_api('map/metro?direction=' + direction)
     CURRENT_LOC = next(iter(MAP['state']['map']['metro'][CURRENT_LOC][direction]))
-    print('Current locationId:', CURRENT_LOC)
+    # print('Current locationId:', CURRENT_LOC)
 
 
 def map_leave():
@@ -156,11 +95,11 @@ def map_leave():
 
 
 def go_to_location(location_id, callback):  # where we are trying to go
-    print(CURRENT_LOC)
+    # print(CURRENT_LOC)
     cw_cost = 0
     ccw_cost = 0
     metro = MAP['state']['map']['metro']
-    print(metro)
+    # print(metro)
     new_cw_loc = next(iter(metro[CURRENT_LOC]['cw']))
     new_ccw_loc = next(iter(metro[CURRENT_LOC]['ccw']))
     ccw_cost = ccw_cost + metro[CURRENT_LOC]['ccw'][new_ccw_loc]
@@ -176,17 +115,18 @@ def go_to_location(location_id, callback):  # where we are trying to go
     # print(cw_cost, ccw_cost)
     if cw_cost <= ccw_cost and cw_cost < 15:
         metro_to_location(location_id, 'cw')
-        print('Taking the metro cw to {0} costing {1}'.format(location_id, cw_cost))
+        # print('Taking the metro cw to {0} costing {1}'.format(location_id, cw_cost))
     elif ccw_cost < cw_cost and ccw_cost < 15:
         metro_to_location(location_id, 'ccw')
-        print('Taking the metro ccw to {0} costing {1}'.format(location_id, ccw_cost))
+        # print('Taking the metro ccw to {0} costing {1}'.format(location_id, ccw_cost))
     else:
         map_bike(location_id)
-        print('Biking to {0} costing 15'.format(location_id))
+        # print('Biking to {0} costing 15'.format(location_id))
     callback()
 
 
 def metro_to_location(location_id, direction):
+    # print(location_id, direction)
     if direction == 'cw':
         while location_id != CURRENT_LOC:
             map_metro('cw')
@@ -195,6 +135,81 @@ def metro_to_location(location_id, direction):
             map_metro('ccw')
     else:
         print('Metro error')
+
+
+def find_seed_map():
+    loc = ''
+    game = ''
+    mode = ''
+    seed = 0
+    navigation_seed = 0
+    papersoccer_seed = 0  # start these with some higher values to add a weight towards a type of game?
+    for i in range(len(NAVIGATION_LOCATIONS)):
+        navigation_seed += \
+            MAP['state']['map']['locations'][NAVIGATION_LOCATIONS[i]]['activities']['navigation']['config']['seed']
+        cheapest = cheapest_path(NAVIGATION_LOCATIONS[i])
+        cost = cheapest[0]
+        if navigation_seed/cost > seed/cost:
+            seed = navigation_seed
+            loc = NAVIGATION_LOCATIONS[i]
+            game = 'navigation'
+            mode = cheapest[1]
+    for j in range(len(PAPERSOCCER_LOCATIONS)):
+        papersoccer_seed += \
+            MAP['state']['map']['locations'][PAPERSOCCER_LOCATIONS[j]]['activities']['papersoccer']['config']['seed']
+        cheapest = cheapest_path(PAPERSOCCER_LOCATIONS[j])
+        cost = cheapest[0]
+        if papersoccer_seed/cost > seed/cost:
+            seed = papersoccer_seed
+            loc = PAPERSOCCER_LOCATIONS[j]
+            game = 'papersoccer'
+            mode = cheapest[1]
+    # print('Seed is: ' + str(seed))
+    # print('loc is: ' + loc)
+    return loc, mode, game
+
+
+def cheapest_path(location_id):
+    # print(CURRENT_LOC)
+    cw_cost = 0
+    ccw_cost = 0
+    metro = MAP['state']['map']['metro']
+    # print(metro)
+    new_cw_loc = next(iter(metro[CURRENT_LOC]['cw']))
+    new_ccw_loc = next(iter(metro[CURRENT_LOC]['ccw']))
+    ccw_cost = ccw_cost + metro[CURRENT_LOC]['ccw'][new_ccw_loc]
+    cw_cost = cw_cost + metro[CURRENT_LOC]['cw'][new_cw_loc]
+    while location_id != new_cw_loc:
+        newer_cw_loc = next(iter(metro[new_cw_loc]['cw']))
+        cw_cost = cw_cost + metro[new_cw_loc]['cw'][newer_cw_loc]
+        new_cw_loc = newer_cw_loc
+    while location_id != new_ccw_loc:
+        newer_ccw_loc = next(iter(metro[new_ccw_loc]['ccw']))
+        ccw_cost = ccw_cost + metro[new_ccw_loc]['ccw'][newer_ccw_loc]
+        new_ccw_loc = newer_ccw_loc
+    if cw_cost <= ccw_cost and cw_cost < 15:
+        # print('Taking the metro cw to {0} costing {1}'.format(location_id, cw_cost))
+        return cw_cost, 'cw'
+    elif ccw_cost < cw_cost and ccw_cost < 15:
+        # print('Taking the metro ccw to {0} costing {1}'.format(location_id, ccw_cost))
+        return ccw_cost, 'ccw'
+    else:
+        map_bike(location_id)
+        # print('Biking to {0} costing 15'.format(location_id))
+        return 15, 'bike'
+
+
+def go_to_best_location(loc_game_tuple):
+    # print(loc_game_tuple)
+    loc = loc_game_tuple[0]
+    mode = loc_game_tuple[1]
+    game = loc_game_tuple[2]
+    if mode == 'bike':
+        map_bike(loc)
+    else:
+        metro_to_location(loc, mode)
+    return game
+
 
 """
 Papersoccer
@@ -207,7 +222,9 @@ def papersoccer_enter():
 
 
 def papersoccer_leave():
+    global MAP
     res = call_api('papersoccer/leave')
+    MAP = res
     return res
 
 
@@ -235,11 +252,8 @@ def papersoccer_compete():
 
 
 def go_to_papersoccer_location(callback):
-    locations = ['dis', 'jaegersborggade']
-    #go_to_location(random.choice(locations), callback)
-    location = find_seed_map()[0]
-    if find_seed_map()[1] == 'papersoccer':
-        go_to_location(location, callback)
+    locations = ['dis', 'jaegersborggade']  # 'parken'
+    go_to_location(random.choice(locations), callback)
 
 """
 Navigation
@@ -252,7 +266,9 @@ def navigation_enter():
 
 
 def navigation_leave():
+    global MAP
     res = call_api('navigation/leave')
+    MAP = res
     return res
 
 
@@ -265,7 +281,7 @@ def dfs_play():
     nav = navigation_enter()
     board = DFS(nav, TOKEN)
     path = board.pseudo_main()
-    print(path)
+    # print(path)
     for i in range(len(path) - 1):
         navigation_lane(path[i])
         # time.sleep(0.5)
@@ -280,9 +296,9 @@ def navigation_play():
     board.pretty_print()
 
     path = board.get_best_first_path()
-    print(path)
+    # print(path)
     for i in range(len(path) - 1):
-        print(i)
+        # print(i)
         navigation_lane(path[i])
         # time.sleep(0.5)
     current_weight = board.final_count()
@@ -300,18 +316,26 @@ def average_navigation_credits():
 
 def go_to_nav_location(callback):
     locations = ['bryggen', 'noerrebrogade', 'langelinie', 'dis']
-    #go_to_location(random.choice(locations), callback)
-    location = find_seed_map()[0]
-    if find_seed_map()[1] == 'navigation':
-        go_to_location(location, callback)
+    go_to_location(random.choice(locations), callback)
 
 
 def main():
     map_enter()
-    # go_to_location('dis', papersoccer_compete)
     while True:
-        go_to_papersoccer_location(papersoccer_compete)
-        go_to_nav_location(dfs_play)
+        game = go_to_best_location(find_seed_map())
+        # print(game)
+        # time.sleep(1)
+        if game == 'papersoccer':
+            # print(CURRENT_LOC)
+            papersoccer_compete()
+            # time.sleep(2)
+        elif game == 'navigation':
+            # print(CURRENT_LOC)
+            dfs_play()
+            # time.sleep(2)
+        # go_to_papersoccer_location(papersoccer_compete)
+        # go_to_papersoccer_location(papersoccer_compete)
+        # go_to_nav_location(dfs_play)
     map_leave()
     environment_leave()
 
