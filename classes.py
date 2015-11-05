@@ -5,6 +5,8 @@
 import random
 import json
 import itertools
+import time
+from copy import deepcopy
 
 
 class Navigation:
@@ -95,6 +97,143 @@ class Navigation:
             self.which_direction()
         return self.move_list
 
+
+class Soccerfield:
+    def __init__(self, soccerfield):
+        self.height = soccerfield['soccerfield']['height']
+        self.width = soccerfield['soccerfield']['width']
+        self.k = soccerfield['soccerfield']['k']
+        self.plays_made = soccerfield['soccerfield']['playsMade']
+        self.current_vertex = soccerfield['currentVertex']
+        self.vertices = soccerfield['soccerfield']['vertices']
+        self.edges = soccerfield['soccerfield']['edges']
+        self.message = ''
+
+    @staticmethod
+    def str_loc(obj):
+        return '[' + str(obj['row']) + ',' + str(obj['column']) + ']'
+
+    @staticmethod
+    def move_info(loc, direction):
+        directions = {'nw': [-1, -1],
+                      'n': [-1, 0],
+                      'ne': [-1, 1],
+                      'e': [0, 1],
+                      'se': [1, 1],
+                      's': [1, 0],
+                      'sw': [1, -1],
+                      'w': [0, -1]
+                      }
+        opposite_direction = {'nw': 'se',
+                              'n': 's',
+                              'ne': 'sw',
+                              'e': 'w',
+                              'se': 'nw',
+                              's': 'n',
+                              'sw': 'ne',
+                              'w': 'e'}
+        return {
+            'orig': loc,
+            'dest': {
+                'row': loc['row'] + directions[direction][0],
+                'column': loc['column'] + directions[direction][1]
+            },
+            'opposite_direction': opposite_direction[direction]
+        }
+
+    def get_current_vertex(self):
+        return self.current_vertex
+
+    def is_playable(self, orig, dest):
+        if orig not in self.vertices or dest not in self.vertices:
+            return False
+        return dest not in self.edges[orig] and orig not in self.edges[dest]
+
+    def is_in_goal(self, loc):
+        left_goal = loc['row'] == 2 + self.k and loc['column'] == 0
+        right_goal = loc['row'] == 2 + self.k and loc['column'] == self.width - 1
+        return left_goal or right_goal
+
+    def can_move(self, loc, direction):
+        edge = self.move_info(loc, direction)
+        return self.is_playable(self.str_loc(edge['orig']), self.str_loc(edge['dest']))
+
+    def is_trapped(self, loc):
+        directions = ['nw', 'w', 'ne', 'e', 'se', 's', 'sw', 'w']
+        for i in range(len(directions)):
+            if self.can_move(loc, directions[i]):
+                print('can move to', directions[i], self.can_move(loc, directions[i]))
+                return False
+        print('\x1B[91mIT\'S A TRAP!\x1B[0m')
+        return True
+
+    def terminal_test(self):
+        # TODO this is super hacky, look for alternatives
+        if any(x in self.message for x in ['win', 'lost', 'tie', 'over']):
+            return True
+        loc = self.current_vertex
+        in_goal = self.is_in_goal(loc)
+        is_trapped = self.is_trapped(loc)
+        return True if in_goal else is_trapped
+
+    def move(self, direction, player):
+        loc = self.current_vertex
+        edge = self.move_info(loc, direction)
+        orig_str = self.str_loc(edge['orig'])
+        dest_str = self.str_loc(edge['dest'])
+        self.vertices[orig_str][direction] = player
+        self.vertices[dest_str][edge['opposite_direction']] = player
+        self.vertices[orig_str]['visited'] = True
+        self.vertices[dest_str]['visited'] = True
+        self.edges[orig_str][dest_str] = player
+        self.edges[dest_str][orig_str] = player
+        self.current_vertex = edge['dest']
+        self.plays_made += 1
+
+    def is_visited(self, loc, direction):
+        edge = self.move_info(loc, direction)
+        if self.str_loc(edge['orig']) not in self.vertices:
+            return True  # Unreachable vertices have already been visited
+        return 'visited' in self.vertices[self.str_loc(edge['orig'])]
+
+    def process_response(self, res, move):
+        self.message = res['action']['message']
+        if res['action']['applicable']:
+            self.move(move, 'agent')
+            for i in range(len(res['action']['percepts'])):
+                self.move(res['action']['percepts'][i], 'opponent')
+        else:
+            print('\x1B[91mNOT APPLICABLE. SOMETHING IS WRONG :\'(\x1B[0m')
+
+
+class PapersoccerAI:
+    def __init__(self):
+        print('\x1B[95m#ClassicLinnea\x1B[0m')
+
+    def get_direction(self, soccerfield):
+        priority1 = ['e', 'ne', 'se']
+        priority2 = ['n', 's']
+        priority3 = ['sw', 'nw', 'w']
+        # print('e', soccerfield.can_move(soccerfield.get_current_vertex(), 'e'))
+        # print('ne', soccerfield.can_move(soccerfield.get_current_vertex(), 'ne'))
+        # print('se', soccerfield.can_move(soccerfield.get_current_vertex(), 'se'))
+        print(soccerfield.get_current_vertex())
+        for i in range(len(priority1)):
+            truth = soccerfield.can_move(soccerfield.get_current_vertex(), priority1[i])
+            if truth:
+                print(priority1[i], truth)
+                return priority1[i]
+        for i in range(len(priority2)):
+            truth = soccerfield.can_move(soccerfield.get_current_vertex(), priority2[i])
+            if truth:
+                print(priority2[i], truth)
+                return priority2[i]
+        for i in range(len(priority3)):
+            truth = soccerfield.can_move(soccerfield.get_current_vertex(), priority3[i])
+            if truth:
+                print(priority3[i], truth)
+                return priority3[i]
+        return "no move"
 
 
 class DFS:
@@ -267,65 +406,3 @@ class DFS:
                 self.current_position = self.move_current_loc(response[1], self.current_position)
         chain = itertools.chain.from_iterable(self.move_list)
         return list(chain)
-
-
-class Papersoccer:
-    directions = {'nw': [-1, -1],
-                  'n': [-1, 0],
-                  'ne': [-1, 1],
-                  'e': [0, 1],
-                  'se': [1, 1],
-                  's': [1, 0],
-                  'sw': [1, -1],
-                  'w': [0, -1]
-                  }
-    opposite_direction = {'nw': 'se',
-                          'n': 's',
-                          'ne': 'sw',
-                          'e': 'w',
-                          'se': 'nw',
-                          's': 'n',
-                          'sw': 'ne',
-                          'w': 'e'}
-    initial_return = {}
-    ball_location = {}
-    vertices = {}
-    edges = {}
-    game_ended = False
-
-    def __init__(self, nav):
-        self.initial_return = nav
-        self.ball_location = nav['currentVertex']
-        self.vertices = nav['soccerfield']['vertices']
-        self.edges = nav['soccerfield']['edges']
-        self.game_ended = False
-
-    def pretty_print(self):
-        print('Ball location:', self.ball_location)
-        # print(self.vertices)
-
-    def str_loc(self):
-        return '[' + str(self.ball_location['row']) + ',' + str(self.ball_location['column']) + ']'
-
-    def game_complete(self):
-        return self.game_ended
-
-    def turn(self):  # TODO implement AI
-        return random.choice(list(self.opposite_direction.keys()))
-
-    def move(self, player, move):
-        print(player + ' move: ' + move)
-        self.vertices[self.str_loc()][move] = player
-        self.ball_location['row'] += self.directions[move][0]
-        self.ball_location['column'] += self.directions[move][1]
-        self.vertices[self.str_loc()][self.opposite_direction[move]] = player
-        self.vertices[self.str_loc()]['visited'] = True
-
-    def process_response(self, res, turn):
-        print(json.dumps(res, sort_keys=True, indent=4))
-        if any(x in res['action']['message'] for x in ['win', 'lost', 'tie', 'over']):
-            self.game_ended = True
-        elif res['action']['applicable']:
-            self.move('agent', turn)
-            for i in range(len(res['action']['percepts'])):
-                self.move('opponent', res['action']['percepts'][i])

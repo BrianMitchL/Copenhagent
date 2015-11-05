@@ -14,6 +14,8 @@ from random import randint
 from classes import Navigation
 from classes import DFS
 from classes import Papersoccer
+from classes import PapersoccerAI
+from classes import Soccerfield
 
 
 def environment_connect(name):
@@ -151,14 +153,14 @@ def papersoccer_play(direction):
 
 def papersoccer_compete():
     nav = papersoccer_enter()
-    board = Papersoccer(nav)
-    board.pretty_print()
-    while not board.game_complete():
-        turn = board.turn()
-        res = papersoccer_play(turn)
-        # time.sleep(1)
-        board.process_response(res, turn)
-    board.pretty_print()
+    field = Soccerfield(nav)
+    ai = PapersoccerAI()
+    while not field.terminal_test():
+        move = ai.get_direction(field)
+        res = papersoccer_play(move)
+        # print(json.dumps(res, sort_keys=True, indent=2))
+        field.process_response(res, move)
+        time.sleep(1)
     papersoccer_leave()
 
 
@@ -234,11 +236,10 @@ def go_to_nav_location(callback):
 
 def main():
     map_enter()
-    # go_to_location('jaegersborggade', papersoccer_compete)
-    while True:
-        go_to_nav_location(dfs_play)
+    go_to_location('dis', papersoccer_compete)
     # while True:
-    #     go_to_nav_location(navigation_play)
-    map_leave()
+    #     go_to_nav_location(dfs_play)
+    # map_leave()
+    # environment_leave()
 
 main()
