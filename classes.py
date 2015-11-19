@@ -107,6 +107,8 @@ class Soccerfield:
         self.vertices = soccerfield['soccerfield']['vertices']
         self.edges = soccerfield['soccerfield']['edges']
         self.message = ''
+        self.agents_turn = True
+        self.directions = ['e', 'ne', 'se', 'n', 's', 'nw', 'sw', 'w']
 
     @staticmethod
     def str_loc(obj):
@@ -146,6 +148,9 @@ class Soccerfield:
     def get_k(self):
         return self.k
 
+    def get_agents_turn(self):
+        return self.agents_turn
+
     def is_playable(self, orig, dest):
         if orig not in self.vertices or dest not in self.vertices:
             return False
@@ -156,15 +161,21 @@ class Soccerfield:
         right_goal = loc['row'] == 2 + self.k and loc['column'] == self.width - 1
         return left_goal or right_goal
 
+    def legal_moves(self, loc):
+        moves = []
+        for i in range(len(self.directions)):
+            if self.can_move(loc, self.directions[i]):
+                moves.append(self.directions[i])
+        return moves
+
     def can_move(self, loc, direction):
         edge = self.move_info(loc, direction)
         return self.is_playable(self.str_loc(edge['orig']), self.str_loc(edge['dest']))
 
     def is_trapped(self, loc):
-        directions = ['nw', 'w', 'ne', 'e', 'se', 's', 'sw', 'w']
-        for i in range(len(directions)):
-            if self.can_move(loc, directions[i]):
-                # print('can move to', directions[i], self.can_move(loc, directions[i]))
+        for i in range(len(self.directions)):
+            if self.can_move(loc, self.directions[i]):
+                # print('can move to', self.directions[i], self.can_move(loc, self.directions[i]))
                 return False
         print('\x1B[91mIT\'S A TRAP!\x1B[0m')
         return True
@@ -191,6 +202,10 @@ class Soccerfield:
         self.edges[dest_str][orig_str] = player
         self.current_vertex = edge['dest']
         self.plays_made += 1
+        return self.current_vertex
+
+    def destination(self, loc, direction):
+        return self.move_info(loc, direction)['dest']
 
     def is_visited(self, loc, direction):
         edge = self.move_info(loc, direction)
@@ -202,15 +217,44 @@ class Soccerfield:
         self.message = res['action']['message']
         if res['action']['applicable']:
             self.move(move, 'agent')
+            self.agents_turn = False
             for i in range(len(res['action']['percepts'])):
                 self.move(res['action']['percepts'][i], 'opponent')
+            self.agents_turn = True
         else:
             print('\x1B[91mNOT APPLICABLE. SOMETHING IS WRONG :\'(\x1B[0m')
+
+    def utility(self, loc):
+        trapped = self.is_trapped(loc)
+        is_in_left_goal = self.is_in_goal(loc) and loc['column'] == 0
+        is_in_right_goal = self.is_in_goal(loc) and loc['column'] == self.width - 1
+        if is_in_left_goal or (trapped and self.agents_turn):
+            return -self.plays_made
+        if is_in_right_goal or (trapped and not self.agents_turn):
+            return self.plays_made
+        return None
+
+    def successors(self, loc):
+        return [(direction, self.destination(loc, direction)) for direction in self.legal_moves(loc)]
+
+    def clone(self):  # TODO make sure this works with deep copy, etc.
+        fields = {'soccerfield': {
+            'height': self.height,
+            'width': self.width,
+            'k': self.k,
+            'plays_made': self.plays_made,
+            'vertices': deepcopy(self.vertices),
+            'edges': deepcopy(self.edges),
+            'currentVertex': self.current_vertex
+            }
+        }
+        clone = Soccerfield(fields)
+        return clone
 
 
 class PapersoccerAISimple:
     def __init__(self):
-        print('\x1B[95m#ClassicLinnea\x1B[0m')
+        print('\x1B[95mSimple\x1B[0m')
 
     def get_direction(self, soccerfield):
         priority_list = ['e', 'ne', 'se', 'n', 's', 'sw', 'nw', 'w']
@@ -223,7 +267,7 @@ class PapersoccerAISimple:
 
 class PapersoccerAINotAsSimple:
     def __init__(self):
-        print('\x1B[95m#ClassicBrian\x1B[0m')
+        print('\x1B[95mBrian\'s Bad AI\x1B[0m')
 
     def prefer_visited(self, soccerfield, directions):
         nd = deepcopy(directions)
@@ -251,7 +295,7 @@ class PapersoccerAINotAsSimple:
 
     def get_direction(self, soccerfield):
         loc = soccerfield.get_current_vertex()
-        directions = {'e': 2,
+        directions = {'e': 3,
                       'ne': 2,
                       'se': 2,
                       'n': 1,
@@ -391,7 +435,8 @@ class DFS:
 
                 highest = self.max_weight(stay_weight, -90000, right_weight)
                 if highest[1] == 'left':
-                    print('WHAT THE FUCKING HELL ARE YOU DOING GOING LEFT')
+                    pass
+                    # print('WHAT THE FUCKING HELL ARE YOU DOING GOING LEFT')
                 elif highest[1] == 'stay':
                     # print('STAY')
                     weight = stay_response[0]
@@ -425,7 +470,8 @@ class DFS:
                     weight = stay_response[0]
                     mv_lst = list(stay_response[1])
                 elif highest[1] == 'right':
-                    print('WHAT THE FUCKING HELL ARE YOU DOING GOING RIGHT')
+                    # print('WHAT THE FUCKING HELL ARE YOU DOING GOING RIGHT')
+                    pass
                 weight = weight + highest[0]
                 mv_lst.insert(0, highest[1])
 
