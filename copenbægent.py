@@ -15,8 +15,11 @@ from classes import Navigation
 from classes import DFS
 from classes import PapersoccerAISimple
 from classes import PapersoccerAINotAsSimple
+from classes import PapersoccerMinimax
+from classes import PapersoccerAlphaBeta
 from classes import Soccerfield
 
+# BASE_URL = 'http://172.18.30.249:3000/api/'
 BASE_URL = 'http://localhost:3000/api/'
 
 
@@ -46,7 +49,7 @@ def call_api(endpoint):
     s = requests.get(url, headers=TOKEN_HEADER)
     green = "\x1B[92m" + str(s.status_code) + "\x1B[0m"
     red = "\x1B[91m" + str(s.status_code) + "\x1B[0m"
-    print(url, green) if s.status_code == 200 else print(url, red)
+    # print(url, green) if s.status_code == 200 else print(url, red)
     # print(s.text)
     res = json.loads(s.text)
     # print(json.dumps(res, sort_keys=True, indent=4))
@@ -160,7 +163,7 @@ def find_seed_map():
             MAP['state']['map']['locations'][PAPERSOCCER_LOCATIONS[j]]['activities']['papersoccer']['config']['seed']
         cheapest = cheapest_path(PAPERSOCCER_LOCATIONS[j])
         cost = cheapest[0] * 1.0
-        if (papersoccer_seed + 4)/cost > seed/cost:  # change this number to tweak game preference
+        if (papersoccer_seed + 3.2)/cost > seed/cost:  # change this number to tweak game preference
             seed = papersoccer_seed
             loc = PAPERSOCCER_LOCATIONS[j]
             game = 'papersoccer'
@@ -240,13 +243,14 @@ def papersoccer_play(direction):
 def papersoccer_compete():
     nav = papersoccer_enter()
     field = Soccerfield(nav)
-    if field.get_k() < 2:
-        print("\x1B[91mSimple AI\x1B[0m")
-        ai = PapersoccerAISimple()
-    else:
-        print("\x1B[91mComplex AI\x1B[0m")
-        ai = PapersoccerAINotAsSimple()
-    while not field.terminal_test():
+    # if field.get_k() < 2:
+    #     # print("\x1B[91mSimple AI\x1B[0m")
+    #     ai = PapersoccerAISimple()
+    # else:
+    #     # print("\x1B[91mComplex AI\x1B[0m")
+    #     ai = PapersoccerAINotAsSimple()
+    ai = PapersoccerAlphaBeta()
+    while not field.terminal_test(field.get_current_vertex()):
         move = ai.get_direction(field)
         res = papersoccer_play(move)
         # print(json.dumps(res, sort_keys=True, indent=2))
@@ -256,7 +260,8 @@ def papersoccer_compete():
 
 
 def go_to_papersoccer_location(callback):
-    locations = ['dis', 'jaegersborggade']  # 'parken'
+    # locations = ['dis', 'jaegersborggade', 'parken']
+    locations = ['dis']
     go_to_location(random.choice(locations), callback)
 
 """
@@ -326,19 +331,18 @@ def go_to_nav_location(callback):
 def main():
     map_enter()
     while True:
-        game = go_to_best_location(find_seed_map())
-        # print(game)
-        # time.sleep(1)
-        if game == 'papersoccer':
-            # print(CURRENT_LOC)
-            papersoccer_compete()
-            # time.sleep(2)
-        elif game == 'navigation':
-            # print(CURRENT_LOC)
-            dfs_play()
-            # time.sleep(2)
-        # go_to_papersoccer_location(papersoccer_compete)
-        # go_to_papersoccer_location(papersoccer_compete)
+        # game = go_to_best_location(find_seed_map())
+        # # print(game)
+        # # time.sleep(1)
+        # if game == 'papersoccer':
+        #     # print(CURRENT_LOC)
+        #     papersoccer_compete()
+        #     # time.sleep(2)
+        # elif game == 'navigation':
+        #     # print(CURRENT_LOC)
+        #     dfs_play()
+        #     # time.sleep(2)
+        go_to_papersoccer_location(papersoccer_compete)
         # go_to_nav_location(dfs_play)
     map_leave()
     environment_leave()

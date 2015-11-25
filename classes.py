@@ -7,7 +7,7 @@ import itertools
 from copy import deepcopy
 
 
-def argmin(self, seq, fn):
+def argmin(seq, fn):
     """Return an element with lowest fn(seq[i]) score; tie goes to first one.
     \>>> argmin(['one', 'to', 'three'], len)
     'to'
@@ -21,12 +21,12 @@ def argmin(self, seq, fn):
     return best
 
 
-def argmax(self, seq, fn):
+def argmax(seq, fn):
     """Return an element with highest fn(seq[i]) score; tie goes to first one.
     \>>> argmax(['one', 'to', 'three'], len)
     'three'
     """
-    return self.argmin(seq, lambda x: -fn(x))
+    return argmin(seq, lambda x: -fn(x))
 
 
 class Navigation:
@@ -236,6 +236,7 @@ class Soccerfield:
         return 'visited' in self.vertices[self.str_loc(edge['orig'])]
 
     def process_response(self, res, move):
+        print(res)
         self.message = res['action']['message']
         if res['action']['applicable']:
             self.move(self.current_vertex, move, 'agent')
@@ -307,7 +308,7 @@ class PapersoccerMinimax:
                 if not c.get_agents_turn():
                     v = max(v, min_value(l, c))
                 else:
-                    v = min(v, min_value(l, c))
+                    v = min(v, max_value(l, c))
             return v
 
         def min_value(loc, clone):  # opponent is the min (opponent wants the min value)
@@ -322,12 +323,66 @@ class PapersoccerMinimax:
                 if c.get_agents_turn():
                     v = min(v, max_value(l, c))
                 else:
-                    v = max(v, max_value(l, c))
+                    v = max(v, min_value(l, c))
             return v
 
         # Body of minimax_decision starts here:
         successors = soccerfield.successors(soccerfield.get_current_vertex(), 'agent')
         direction, location, cloned = argmax(successors, lambda dlc: min_value(dlc[1], dlc[2]))
+        print(direction)
+        return direction
+
+
+class PapersoccerAlphaBeta:
+    def __init__(self):
+        print('\x1B[95mAlphaBeta\x1B[0m')
+
+    def get_direction(self, soccerfield):
+        if soccerfield.get_plays_made() == 0:
+            return 'e'
+        return self.alphabeta_search(soccerfield.get_current_vertex(), soccerfield)
+
+    def alphabeta_search(self, location, soccerfield, d=4, cutoff_test=None, eval_fn=None):
+        """Search game to determine best action; use alpha-beta pruning.
+        This version cuts off search and uses an evaluation function."""
+
+        def max_value(loc, alpha, beta, depth, clone):
+            cur_player = 'agent'
+            if cutoff_test(loc, depth):
+                return eval_fn(loc)
+            v = -99999
+            for (d, l, c) in soccerfield.successors(loc, cur_player):
+                if not c.get_agents_turn():
+                    v = max(v, min_value(l, alpha, beta, depth+1, c))
+                else:
+                    v = min(v, max_value(l, alpha, beta, depth+1, c))
+                if v >= beta:
+                    return v
+                alpha = max(alpha, v)
+            return v
+
+        def min_value(loc, alpha, beta, depth, clone):
+            cur_player = 'opponent'
+            if cutoff_test(loc, depth):
+                return eval_fn(loc)
+            v = 99999
+            for (d, l, c) in soccerfield.successors(loc, cur_player):
+                if c.get_agents_turn():
+                    v = min(v, max_value(l, alpha, beta, depth+1, c))
+                else:
+                    v = max(v, min_value(l, alpha, beta, depth+1, c))
+                if v <= alpha:
+                    return v
+                beta = min(beta, v)
+            return v
+
+        # Body of alphabeta_search starts here:
+        # The default test cuts off at depth d or at a terminal state
+        cutoff_test = (cutoff_test or
+                       (lambda loc, depth: depth > d or soccerfield.terminal_test(loc)))
+        eval_fn = eval_fn or (lambda loc: soccerfield.utility(loc))
+        direction, location, cloned = argmax(soccerfield.successors(location, 'agent'),
+                                             lambda dlc: min_value(dlc[1], -99999, 99999, 0, dlc[2]))
         print(direction)
         return direction
 
