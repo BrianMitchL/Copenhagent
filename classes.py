@@ -5,7 +5,28 @@
 import random
 import itertools
 from copy import deepcopy
-import operator
+
+
+def argmin(self, seq, fn):
+    """Return an element with lowest fn(seq[i]) score; tie goes to first one.
+    \>>> argmin(['one', 'to', 'three'], len)
+    'to'
+    """
+    best = seq[0]
+    best_score = fn(best)
+    for x in seq:
+        x_score = fn(x)
+        if x_score < best_score:
+            best, best_score = x, x_score
+    return best
+
+
+def argmax(self, seq, fn):
+    """Return an element with highest fn(seq[i]) score; tie goes to first one.
+    \>>> argmax(['one', 'to', 'three'], len)
+    'three'
+    """
+    return self.argmin(seq, lambda x: -fn(x))
 
 
 class Navigation:
@@ -151,6 +172,9 @@ class Soccerfield:
     def get_agents_turn(self):
         return self.agents_turn
 
+    def get_plays_made(self):
+        return self.plays_made
+
     def is_playable(self, orig, dest):
         if orig not in self.vertices or dest not in self.vertices:
             return False
@@ -177,20 +201,18 @@ class Soccerfield:
             if self.can_move(loc, self.directions[i]):
                 # print('can move to', self.directions[i], self.can_move(loc, self.directions[i]))
                 return False
-        print('\x1B[91mIT\'S A TRAP!\x1B[0m')
+        # print('\x1B[91mIT\'S A TRAP!\x1B[0m')
         return True
 
-    def terminal_test(self):
+    def terminal_test(self, loc):
         # TODO this is super hacky, look for alternatives
         if any(x in self.message for x in ['win', 'lost', 'tie', 'over']):
             return True
-        loc = self.current_vertex
         in_goal = self.is_in_goal(loc)
         is_trapped = self.is_trapped(loc)
         return True if in_goal else is_trapped
 
-    def move(self, direction, player):
-        loc = self.current_vertex
+    def move(self, loc, direction, player):
         edge = self.move_info(loc, direction)
         orig_str = self.str_loc(edge['orig'])
         dest_str = self.str_loc(edge['dest'])
@@ -202,7 +224,7 @@ class Soccerfield:
         self.edges[dest_str][orig_str] = player
         self.current_vertex = edge['dest']
         self.plays_made += 1
-        return self.current_vertex
+        return edge['dest']
 
     def destination(self, loc, direction):
         return self.move_info(loc, direction)['dest']
@@ -216,11 +238,13 @@ class Soccerfield:
     def process_response(self, res, move):
         self.message = res['action']['message']
         if res['action']['applicable']:
-            self.move(move, 'agent')
-            self.agents_turn = False
+            self.move(self.current_vertex, move, 'agent')
             for i in range(len(res['action']['percepts'])):
-                self.move(res['action']['percepts'][i], 'opponent')
-            self.agents_turn = True
+                self.move(self.current_vertex, res['action']['percepts'][i], 'opponent')
+            if len(res['action']['percepts']) == 0:
+                self.agents_turn = True
+            else:
+                self.agents_turn = False
         else:
             print('\x1B[91mNOT APPLICABLE. SOMETHING IS WRONG :\'(\x1B[0m')
 
@@ -232,24 +256,80 @@ class Soccerfield:
             return -self.plays_made
         if is_in_right_goal or (trapped and not self.agents_turn):
             return self.plays_made
-        return None
+        return self.plays_made
 
-    def successors(self, loc):
-        return [(direction, self.destination(loc, direction)) for direction in self.legal_moves(loc)]
+    def successors(self, loc, player):
+        directions_locations = []
+        for direction in self.legal_moves(loc):
+            clone = self.clone()
+            directions_locations.append((direction, clone.move(loc, direction, player), clone))
+        # return [(direction, self.destination(loc, direction)) for direction in self.legal_moves(loc)]
+        return directions_locations  # direction, location, clone
 
     def clone(self):  # TODO make sure this works with deep copy, etc.
         fields = {'soccerfield': {
             'height': self.height,
             'width': self.width,
             'k': self.k,
-            'plays_made': self.plays_made,
+            'playsMade': self.plays_made,
             'vertices': deepcopy(self.vertices),
-            'edges': deepcopy(self.edges),
+            'edges': deepcopy(self.edges)
+            },
             'currentVertex': self.current_vertex
-            }
         }
         clone = Soccerfield(fields)
         return clone
+
+
+class PapersoccerMinimax:
+    # Adapted from here: http://aima.cs.berkeley.edu/python/games.html
+    def __init__(self):
+        print('\x1B[95mMinimax\x1B[0m')
+
+    def get_direction(self, soccerfield):
+        if soccerfield.get_plays_made() == 0:
+            return 'e'
+        return self.minimax_decision(soccerfield)
+
+    def minimax_decision(self, soccerfield):
+        """Given a state in a game, calculate the best move by searching
+        forward all the way to the terminal states. [Fig. 6.4]"""
+
+        def max_value(loc, clone):  # agent is the max (agent wants the max value)
+            cur_player = 'agent'
+            # print(loc)
+            if clone.terminal_test(clone.get_current_vertex()):
+                # print(loc)
+                return clone.utility(loc)
+            v = -99999
+            # a: direction, s: location
+            for (d, l, c) in clone.successors(loc, cur_player):
+                if not c.get_agents_turn():
+                    v = max(v, min_value(l, c))
+                else:
+                    v = min(v, min_value(l, c))
+            return v
+
+        def min_value(loc, clone):  # opponent is the min (opponent wants the min value)
+            cur_player = 'opponent'
+            # print(loc)
+            if clone.terminal_test(clone.get_current_vertex()):
+                # print(loc)
+                return clone.utility(loc)
+            v = 99999
+            # a: direction, s: location
+            for (d, l, c) in clone.successors(loc, cur_player):
+                if c.get_agents_turn():
+                    v = min(v, max_value(l, c))
+                else:
+                    v = max(v, max_value(l, c))
+            return v
+
+        # Body of minimax_decision starts here:
+        successors = soccerfield.successors(soccerfield.get_current_vertex(), 'agent')
+        direction, location, cloned = argmax(successors, lambda dlc: min_value(dlc[1], dlc[2]))
+        print(direction)
+        return direction
 
 
 class PapersoccerAISimple:
@@ -375,7 +455,7 @@ class DFS:
                 left = self.go_left(position)
                 stay = self.go_stay(position)
                 return True if \
-                self.get_weight(left) < -100 and self.get_weight(stay) < -100 else False
+                    self.get_weight(left) < -100 and self.get_weight(stay) < -100 else False
 
     def search(self, root, level):
         # print('LEVEL ' + str(level))
@@ -470,7 +550,7 @@ class DFS:
                     weight = stay_response[0]
                     mv_lst = list(stay_response[1])
                 elif highest[1] == 'right':
-                    # print('WHAT THE FUCKING HELL ARE YOU DOING GOING RIGHT')
+                    # print('That’s not right')
                     pass
                 weight = weight + highest[0]
                 mv_lst.insert(0, highest[1])
