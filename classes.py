@@ -308,7 +308,7 @@ class PapersoccerMinimax:
                 if not c.get_agents_turn():
                     v = max(v, min_value(l, c))
                 else:
-                    v = min(v, max_value(l, c))
+                    v = max(v, max_value(l, c))
             return v
 
         def min_value(loc, clone):  # opponent is the min (opponent wants the min value)
@@ -323,7 +323,7 @@ class PapersoccerMinimax:
                 if c.get_agents_turn():
                     v = min(v, max_value(l, c))
                 else:
-                    v = max(v, min_value(l, c))
+                    v = min(v, min_value(l, c))
             return v
 
         # Body of minimax_decision starts here:
@@ -355,7 +355,7 @@ class PapersoccerAlphaBeta:
                 if not c.get_agents_turn():
                     v = max(v, min_value(l, alpha, beta, depth+1, c))
                 else:
-                    v = min(v, max_value(l, alpha, beta, depth+1, c))
+                    v = max(v, max_value(l, alpha, beta, depth+1, c))
                 if v >= beta:
                     return v
                 alpha = max(alpha, v)
@@ -370,7 +370,7 @@ class PapersoccerAlphaBeta:
                 if c.get_agents_turn():
                     v = min(v, max_value(l, alpha, beta, depth+1, c))
                 else:
-                    v = max(v, min_value(l, alpha, beta, depth+1, c))
+                    v = min(v, min_value(l, alpha, beta, depth+1, c))
                 if v <= alpha:
                     return v
                 beta = min(beta, v)
