@@ -351,7 +351,7 @@ class PapersoccerAlphaBeta:
             if cutoff_test(loc, depth):
                 return eval_fn(loc)
             v = -99999
-            for (d, l, c) in soccerfield.successors(loc, cur_player):
+            for (d, l, c) in clone.successors(loc, cur_player):
                 if not c.get_agents_turn():
                     v = max(v, min_value(l, alpha, beta, depth+1, c))
                 else:
@@ -366,7 +366,7 @@ class PapersoccerAlphaBeta:
             if cutoff_test(loc, depth):
                 return eval_fn(loc)
             v = 99999
-            for (d, l, c) in soccerfield.successors(loc, cur_player):
+            for (d, l, c) in clone.successors(loc, cur_player):
                 if c.get_agents_turn():
                     v = min(v, max_value(l, alpha, beta, depth+1, c))
                 else:
