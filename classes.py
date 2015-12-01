@@ -196,6 +196,12 @@ class Soccerfield:
         edge = self.move_info(loc, direction)
         return self.is_playable(self.str_loc(edge['orig']), self.str_loc(edge['dest']))
 
+    def can_bounce(self, loc):
+        for direction in self.legal_moves(loc):
+            if 'visited' in self.vertices[self.str_loc(self.move_info(loc, direction)['dest'])]:
+                return True
+        return False
+
     def is_trapped(self, loc):
         for i in range(len(self.directions)):
             if self.can_move(loc, self.directions[i]):
@@ -257,7 +263,7 @@ class Soccerfield:
             return -self.plays_made
         if is_in_right_goal or (trapped and not self.agents_turn):
             return self.plays_made
-        return self.plays_made
+        return loc['column']  # reward moving to the right
 
     def successors(self, loc, player):
         directions_locations = []
@@ -342,14 +348,14 @@ class PapersoccerAlphaBeta:
             return 'e'
         return self.alphabeta_search(soccerfield.get_current_vertex(), soccerfield)
 
-    def alphabeta_search(self, location, soccerfield, d=4, cutoff_test=None, eval_fn=None):
+    def alphabeta_search(self, location, soccerfield, d=2, cutoff_test=None, eval_fn=None):
         """Search game to determine best action; use alpha-beta pruning.
         This version cuts off search and uses an evaluation function."""
 
         def max_value(loc, alpha, beta, depth, clone):
             cur_player = 'agent'
-            if cutoff_test(loc, depth):
-                return eval_fn(loc)
+            if cutoff_test(loc, depth, clone):
+                    return eval_fn(loc, clone)
             v = -99999
             for (d, l, c) in clone.successors(loc, cur_player):
                 if not c.get_agents_turn():
@@ -363,8 +369,8 @@ class PapersoccerAlphaBeta:
 
         def min_value(loc, alpha, beta, depth, clone):
             cur_player = 'opponent'
-            if cutoff_test(loc, depth):
-                return eval_fn(loc)
+            if cutoff_test(loc, depth, clone):
+                    return eval_fn(loc, clone)
             v = 99999
             for (d, l, c) in clone.successors(loc, cur_player):
                 if c.get_agents_turn():
@@ -379,8 +385,8 @@ class PapersoccerAlphaBeta:
         # Body of alphabeta_search starts here:
         # The default test cuts off at depth d or at a terminal state
         cutoff_test = (cutoff_test or
-                       (lambda loc, depth: depth > d or soccerfield.terminal_test(loc)))
-        eval_fn = eval_fn or (lambda loc: soccerfield.utility(loc))
+                       (lambda loc, depth, clone: ((clone.can_bounce(loc) and depth > d + 1) and depth > d) or clone.terminal_test(loc)))
+        eval_fn = eval_fn or (lambda loc, clone: clone.utility(loc))
         direction, location, cloned = argmax(soccerfield.successors(location, 'agent'),
                                              lambda dlc: min_value(dlc[1], -99999, 99999, 0, dlc[2]))
         print(direction)
