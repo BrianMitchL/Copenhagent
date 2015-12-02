@@ -348,9 +348,15 @@ class PapersoccerAlphaBeta:
             return 'e'
         return self.alphabeta_search(soccerfield.get_current_vertex(), soccerfield)
 
-    def alphabeta_search(self, location, soccerfield, d=2, cutoff_test=None, eval_fn=None):
+    def alphabeta_search(self, location, soccerfield, d=2):
         """Search game to determine best action; use alpha-beta pruning.
         This version cuts off search and uses an evaluation function."""
+
+        def cutoff_test(loc, depth, clone):
+            return ((clone.can_bounce(loc) and depth > d + 1) and depth > d) or clone.terminal_test(loc)
+
+        def eval_fn(loc, clone):
+            return clone.utility(loc)
 
         def max_value(loc, alpha, beta, depth, clone):
             cur_player = 'agent'
@@ -384,9 +390,9 @@ class PapersoccerAlphaBeta:
 
         # Body of alphabeta_search starts here:
         # The default test cuts off at depth d or at a terminal state
-        cutoff_test = (cutoff_test or
-                       (lambda loc, depth, clone: ((clone.can_bounce(loc) and depth > d + 1) and depth > d) or clone.terminal_test(loc)))
-        eval_fn = eval_fn or (lambda loc, clone: clone.utility(loc))
+        # cutoff_test = (cutoff_test or
+        #                (lambda loc, depth, clone: ((clone.can_bounce(loc) and depth > d + 1) and depth > d) or clone.terminal_test(loc)))
+        # eval_fn = eval_fn or (lambda loc, clone: clone.utility(loc))
         direction, location, cloned = argmax(soccerfield.successors(location, 'agent'),
                                              lambda dlc: min_value(dlc[1], -99999, 99999, 0, dlc[2]))
         print(direction)
