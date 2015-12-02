@@ -256,13 +256,6 @@ class Soccerfield:
             print('\x1B[91mNOT APPLICABLE. SOMETHING IS WRONG :\'(\x1B[0m')
 
     def utility(self, loc):
-        trapped = self.is_trapped(loc)
-        is_in_left_goal = self.is_in_goal(loc) and loc['column'] == 0
-        is_in_right_goal = self.is_in_goal(loc) and loc['column'] == self.width - 1
-        if is_in_left_goal or (trapped and self.agents_turn):
-            return loc['column']
-        if is_in_right_goal or (trapped and not self.agents_turn):
-            return loc['column']
         return loc['column']  # reward moving to the right
 
     def successors(self, loc, player):
