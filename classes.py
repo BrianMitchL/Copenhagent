@@ -260,9 +260,9 @@ class Soccerfield:
         is_in_left_goal = self.is_in_goal(loc) and loc['column'] == 0
         is_in_right_goal = self.is_in_goal(loc) and loc['column'] == self.width - 1
         if is_in_left_goal or (trapped and self.agents_turn):
-            return -self.plays_made
+            return loc['column']
         if is_in_right_goal or (trapped and not self.agents_turn):
-            return self.plays_made
+            return loc['column']
         return loc['column']  # reward moving to the right
 
     def successors(self, loc, player):
@@ -348,7 +348,7 @@ class PapersoccerAlphaBeta:
             return 'e'
         return self.alphabeta_search(soccerfield.get_current_vertex(), soccerfield)
 
-    def alphabeta_search(self, location, soccerfield, d=2):
+    def alphabeta_search(self, location, soccerfield, d=4):
         """Search game to determine best action; use alpha-beta pruning.
         This version cuts off search and uses an evaluation function."""
 
