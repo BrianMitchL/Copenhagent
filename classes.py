@@ -338,7 +338,7 @@ class PapersoccerAlphaBeta:
             return 'e'
         return self.alphabeta_search(soccerfield.get_current_vertex(), soccerfield)
 
-    def alphabeta_search(self, location, soccerfield, d=0):
+    def alphabeta_search(self, location, soccerfield, d=1):
         """Search game to determine best action; use alpha-beta pruning.
         This version cuts off search and uses an evaluation function."""
 
