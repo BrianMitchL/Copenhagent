@@ -15,4 +15,4 @@ Setup this: https://github.com/mholmjensen/disai-distribution
 
 All possible PaperSoccer moves are shown here:
 
-![img](papersoccer.png)
+![img](Papersoccer.png)
