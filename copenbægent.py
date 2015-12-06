@@ -9,6 +9,7 @@ import requests
 import json
 from urllib.parse import urlencode
 import random
+import time
 from random import randint
 from classes import Navigation
 from classes import DFS
@@ -17,17 +18,20 @@ from classes import PapersoccerAINotAsSimple
 from classes import PapersoccerMinimax
 from classes import PapersoccerAlphaBeta
 from classes import Soccerfield
+import cProfile
+from datetime import datetime, timedelta
+import pstats
 
-# BASE_URL = 'http://172.18.30.249:3000/api/'
+# BASE_URL = 'http://172.18.23.171:3000/api/'
 BASE_URL = 'http://localhost:3000/api/'
 
 
 def environment_connect(name):
     params = {'name': name}
     r = requests.get(BASE_URL + 'environment/connect?' + urlencode(params))
-    print(r.status_code)
+    #print(r.status_code)
     res = json.loads(r.text)
-    print(res['agentToken'])
+    #print(res['agentToken'])
     return res['agentToken']
 
 
@@ -293,16 +297,24 @@ def go_to_nav_location(callback):
 
 
 def main():
+    period = timedelta(hours=1)
+    end_time = datetime.now() + period
     map_enter()
-    while True:
-        game = go_to_best_location(find_seed_map())
-        if game == 'papersoccer':
-            papersoccer_compete()
-        elif game == 'navigation':
-            dfs_play()
-        # go_to_papersoccer_location(papersoccer_compete)
-        # go_to_nav_location(dfs_play)
+    cont = True
+    while cont:
+        if not end_time <= datetime.now():
+            game = go_to_best_location(find_seed_map())
+            print(game)
+            time.sleep(1)
+            if game == 'papersoccer':
+                papersoccer_compete()
+            elif game == 'navigation':
+                dfs_play()
+            # go_to_papersoccer_location(papersoccer_compete)
+            # go_to_nav_location(dfs_play)
+        else:
+            cont = False
     map_leave()
     environment_leave()
 
-main()
+cProfile.run('main()')
