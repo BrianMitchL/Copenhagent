@@ -9,7 +9,6 @@ import requests
 import json
 from urllib.parse import urlencode
 import random
-import time
 from random import randint
 from classes import Navigation
 from classes import DFS
@@ -74,21 +73,18 @@ def map_enter():
     res = call_api('map/enter')
     MAP = res
     CURRENT_LOC = res['state']['agents'][TOKEN]['locationId']
-    # print('Current locationId:', CURRENT_LOC)
 
 
 def map_bike(location_id):
     global CURRENT_LOC
     call_api('map/bike?locationId=' + location_id)
     CURRENT_LOC = location_id
-    # print('Current locationId:', CURRENT_LOC)
 
 
 def map_metro(direction):
     global CURRENT_LOC
     call_api('map/metro?direction=' + direction)
     CURRENT_LOC = next(iter(MAP['state']['map']['metro'][CURRENT_LOC][direction]))
-    # print('Current locationId:', CURRENT_LOC)
 
 
 def map_leave():
@@ -98,11 +94,9 @@ def map_leave():
 
 
 def go_to_location(location_id, callback):  # where we are trying to go
-    # print(CURRENT_LOC)
     cw_cost = 0
     ccw_cost = 0
     metro = MAP['state']['map']['metro']
-    # print(metro)
     new_cw_loc = next(iter(metro[CURRENT_LOC]['cw']))
     new_ccw_loc = next(iter(metro[CURRENT_LOC]['ccw']))
     ccw_cost = ccw_cost + metro[CURRENT_LOC]['ccw'][new_ccw_loc]
@@ -115,21 +109,16 @@ def go_to_location(location_id, callback):  # where we are trying to go
         newer_ccw_loc = next(iter(metro[new_ccw_loc]['ccw']))
         ccw_cost = ccw_cost + metro[new_ccw_loc]['ccw'][newer_ccw_loc]
         new_ccw_loc = newer_ccw_loc
-    # print(cw_cost, ccw_cost)
     if cw_cost <= ccw_cost and cw_cost < 15:
         metro_to_location(location_id, 'cw')
-        # print('Taking the metro cw to {0} costing {1}'.format(location_id, cw_cost))
     elif ccw_cost < cw_cost and ccw_cost < 15:
         metro_to_location(location_id, 'ccw')
-        # print('Taking the metro ccw to {0} costing {1}'.format(location_id, ccw_cost))
     else:
         map_bike(location_id)
-        # print('Biking to {0} costing 15'.format(location_id))
     callback()
 
 
 def metro_to_location(location_id, direction):
-    # print(location_id, direction)
     if direction == 'cw':
         while location_id != CURRENT_LOC:
             map_metro('cw')
@@ -168,21 +157,13 @@ def find_seed_map():
             loc = PAPERSOCCER_LOCATIONS[j]
             game = 'papersoccer'
             mode = cheapest[1]
-            # print('papersoccer', papersoccer_seed, loc, mode, game)
-    # print('nav seed', navigation_seed)
-    # print('pap seed', papersoccer_seed)
-    # print('Seed is: ' + str(seed))
-    # print('loc is: ' + loc)
-    # time.sleep(2)
     return loc, mode, game
 
 
 def cheapest_path(location_id):
-    # print(CURRENT_LOC)
     cw_cost = 0
     ccw_cost = 0
     metro = MAP['state']['map']['metro']
-    # print(metro)
     new_cw_loc = next(iter(metro[CURRENT_LOC]['cw']))
     new_ccw_loc = next(iter(metro[CURRENT_LOC]['ccw']))
     ccw_cost = ccw_cost + metro[CURRENT_LOC]['ccw'][new_ccw_loc]
@@ -196,18 +177,14 @@ def cheapest_path(location_id):
         ccw_cost = ccw_cost + metro[new_ccw_loc]['ccw'][newer_ccw_loc]
         new_ccw_loc = newer_ccw_loc
     if cw_cost <= ccw_cost and cw_cost < 15:
-        # print('Taking the metro cw to {0} costing {1}'.format(location_id, cw_cost))
         return cw_cost, 'cw'
     elif ccw_cost < cw_cost and ccw_cost < 15:
-        # print('Taking the metro ccw to {0} costing {1}'.format(location_id, ccw_cost))
         return ccw_cost, 'ccw'
     else:
-        # print('Biking to {0} costing 15'.format(location_id))
         return 15, 'bike'
 
 
 def go_to_best_location(loc_game_tuple):
-    # print(loc_game_tuple)
     loc = loc_game_tuple[0]
     mode = loc_game_tuple[1]
     game = loc_game_tuple[2]
@@ -243,25 +220,17 @@ def papersoccer_play(direction):
 def papersoccer_compete():
     nav = papersoccer_enter()
     field = Soccerfield(nav)
-    # if field.get_k() < 2:
-    #     # print("\x1B[91mSimple AI\x1B[0m")
-    #     ai = PapersoccerAISimple()
-    # else:
-    #     # print("\x1B[91mComplex AI\x1B[0m")
-    #     ai = PapersoccerAINotAsSimple()
     ai = PapersoccerAlphaBeta()
     while not field.terminal_test(field.get_current_vertex()):
         move = ai.get_direction(field)
         res = papersoccer_play(move)
-        # print(json.dumps(res, sort_keys=True, indent=2))
         field.process_response(res, move)
-        # time.sleep(0.25)
     papersoccer_leave()
 
 
 def go_to_papersoccer_location(callback):
     # locations = ['dis', 'jaegersborggade', 'parken']
-    locations = ['dis']
+    locations = ['dis', 'jaegersborggade']
     go_to_location(random.choice(locations), callback)
 
 """
@@ -290,10 +259,8 @@ def dfs_play():
     nav = navigation_enter()
     board = DFS(nav, TOKEN)
     path = board.pseudo_main()
-    # print(path)
     for i in range(len(path) - 1):
         navigation_lane(path[i])
-        # time.sleep(0.5)
     navigation_leave()
 
 
@@ -305,11 +272,8 @@ def navigation_play():
     board.pretty_print()
 
     path = board.get_best_first_path()
-    # print(path)
     for i in range(len(path) - 1):
-        # print(i)
         navigation_lane(path[i])
-        # time.sleep(0.5)
     current_weight = board.final_count()
     NAVIGATION_WEIGHT.append(current_weight)
     NAVIGATION_PLAYS += NAVIGATION_PLAYS
@@ -331,18 +295,12 @@ def go_to_nav_location(callback):
 def main():
     map_enter()
     while True:
-        # game = go_to_best_location(find_seed_map())
-        # # print(game)
-        # # time.sleep(1)
-        # if game == 'papersoccer':
-        #     # print(CURRENT_LOC)
-        #     papersoccer_compete()
-        #     # time.sleep(2)
-        # elif game == 'navigation':
-        #     # print(CURRENT_LOC)
-        #     dfs_play()
-        #     # time.sleep(2)
-        go_to_papersoccer_location(papersoccer_compete)
+        game = go_to_best_location(find_seed_map())
+        if game == 'papersoccer':
+            papersoccer_compete()
+        elif game == 'navigation':
+            dfs_play()
+        # go_to_papersoccer_location(papersoccer_compete)
         # go_to_nav_location(dfs_play)
     map_leave()
     environment_leave()

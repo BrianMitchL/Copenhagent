@@ -2,6 +2,7 @@
 # Brennan Kuo
 # Brian Mitchell
 # Linnea Sahlberg
+
 import random
 import itertools
 from copy import deepcopy
@@ -205,13 +206,10 @@ class Soccerfield:
     def is_trapped(self, loc):
         for i in range(len(self.directions)):
             if self.can_move(loc, self.directions[i]):
-                # print('can move to', self.directions[i], self.can_move(loc, self.directions[i]))
                 return False
-        # print('\x1B[91mIT\'S A TRAP!\x1B[0m')
         return True
 
     def terminal_test(self, loc):
-        # TODO this is super hacky, look for alternatives
         if any(x in self.message for x in ['win', 'lost', 'tie', 'over']):
             return True
         in_goal = self.is_in_goal(loc)
@@ -263,10 +261,9 @@ class Soccerfield:
         for direction in self.legal_moves(loc):
             clone = self.clone()
             directions_locations.append((direction, clone.move(loc, direction, player), clone))
-        # return [(direction, self.destination(loc, direction)) for direction in self.legal_moves(loc)]
         return directions_locations  # direction, location, clone
 
-    def clone(self):  # TODO make sure this works with deep copy, etc.
+    def clone(self):
         fields = {'soccerfield': {
             'height': self.height,
             'width': self.width,
@@ -341,20 +338,17 @@ class PapersoccerAlphaBeta:
             return 'e'
         return self.alphabeta_search(soccerfield.get_current_vertex(), soccerfield)
 
-    def alphabeta_search(self, location, soccerfield, d=4):
+    def alphabeta_search(self, location, soccerfield, d=0):
         """Search game to determine best action; use alpha-beta pruning.
         This version cuts off search and uses an evaluation function."""
 
         def cutoff_test(loc, depth, clone):
             return ((clone.can_bounce(loc) and depth > d + 1) and depth > d) or clone.terminal_test(loc)
 
-        def eval_fn(loc, clone):
-            return clone.utility(loc)
-
         def max_value(loc, alpha, beta, depth, clone):
             cur_player = 'agent'
             if cutoff_test(loc, depth, clone):
-                    return eval_fn(loc, clone)
+                    return clone.utility(loc)
             v = -99999
             for (d, l, c) in clone.successors(loc, cur_player):
                 if not c.get_agents_turn():
@@ -369,7 +363,7 @@ class PapersoccerAlphaBeta:
         def min_value(loc, alpha, beta, depth, clone):
             cur_player = 'opponent'
             if cutoff_test(loc, depth, clone):
-                    return eval_fn(loc, clone)
+                    return clone.utility(loc)
             v = 99999
             for (d, l, c) in clone.successors(loc, cur_player):
                 if c.get_agents_turn():
@@ -383,9 +377,6 @@ class PapersoccerAlphaBeta:
 
         # Body of alphabeta_search starts here:
         # The default test cuts off at depth d or at a terminal state
-        # cutoff_test = (cutoff_test or
-        #                (lambda loc, depth, clone: ((clone.can_bounce(loc) and depth > d + 1) and depth > d) or clone.terminal_test(loc)))
-        # eval_fn = eval_fn or (lambda loc, clone: clone.utility(loc))
         direction, location, cloned = argmax(soccerfield.successors(location, 'agent'),
                                              lambda dlc: min_value(dlc[1], -99999, 99999, 0, dlc[2]))
         print(direction)
@@ -518,13 +509,11 @@ class DFS:
                     self.get_weight(left) < -100 and self.get_weight(stay) < -100 else False
 
     def search(self, root, level):
-        # print('LEVEL ' + str(level))
         current_pos = root
         response = self.search_recursive(current_pos, level - 1)
         return response[0], response[1]
 
     def search_recursive(self, current_pos, level):
-        # print(current_pos)
         if level == 0:
             return self.get_weight(current_pos), 'E'
         if self.is_dead_end(current_pos):
@@ -533,7 +522,6 @@ class DFS:
             mv_lst = []
             weight = None
             if current_pos['row'] > 0 and current_pos['row'] < self.size['rows'] - 1:
-                # print('MIDDLE ROWS')
                 left_node = self.go_left(current_pos)
                 left_response = self.search_recursive(left_node, level - 1)
                 stay_node = self.go_stay(current_pos)
@@ -547,15 +535,12 @@ class DFS:
 
                 highest = self.max_weight(stay_weight, left_weight, right_weight)
                 if highest[1] == 'left':
-                    # print('LEFT')
                     weight = left_response[0]
                     mv_lst = list(left_response[1])
                 elif highest[1] == 'stay':
-                    # print('STAY')
                     weight = stay_response[0]
                     mv_lst = list(stay_response[1])
                 elif highest[1] == 'right':
-                    # print('RIGHT')
                     weight = right_response[0]
                     mv_lst = list(right_response[1])
                 weight = weight + highest[0]
@@ -564,7 +549,6 @@ class DFS:
                 return weight, mv_lst
 
             elif current_pos['row'] <= 0:
-                # print('LEFT ROW LEFT EDGE')
                 stay_node = self.go_stay(current_pos)
                 stay_response = self.search_recursive(stay_node, level - 1)
                 right_node = self.go_right(current_pos)
@@ -576,13 +560,10 @@ class DFS:
                 highest = self.max_weight(stay_weight, -90000, right_weight)
                 if highest[1] == 'left':
                     pass
-                    # print('WHAT THE FUCKING HELL ARE YOU DOING GOING LEFT')
                 elif highest[1] == 'stay':
-                    # print('STAY')
                     weight = stay_response[0]
                     mv_lst = list(stay_response[1])
                 elif highest[1] == 'right':
-                    # print('RIGHT')
                     weight = right_response[0]
                     mv_lst = list(right_response[1])
                 weight = weight + highest[0]
@@ -591,7 +572,6 @@ class DFS:
                 return weight, mv_lst
 
             elif current_pos['row'] >= self.size['rows'] - 1:
-                # print('RIGHT ROW')
                 left_node = self.go_left(current_pos)
                 left_response = self.search_recursive(left_node, level - 1)
                 stay_node = self.go_stay(current_pos)
@@ -602,15 +582,12 @@ class DFS:
 
                 highest = self.max_weight(stay_weight, left_weight, -90000)
                 if highest[1] == 'left':
-                    # print('LEFT')
                     weight = left_response[0]
                     mv_lst = list(left_response[1])
                 elif highest[1] == 'stay':
-                    # print('STAY')
                     weight = stay_response[0]
                     mv_lst = list(stay_response[1])
                 elif highest[1] == 'right':
-                    # print('That’s not right')
                     pass
                 weight = weight + highest[0]
                 mv_lst.insert(0, highest[1])
